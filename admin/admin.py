@@ -70,7 +70,6 @@ admin = Blueprint('admin', __name__, template_folder='templates', static_folder=
 # .today() - returns the current date as a datetime object
 ##################################################################
 
-
 @admin.route('/homepage', methods=['GET', 'POST'])
 def admin_homepage():
     # Render homepage for admin, including the calendar, buttons, bookings, shifts, etc...
@@ -80,7 +79,7 @@ def admin_homepage():
     
     # Using .today(), get current date infomation and the object in the today variable so we can access individual components of the current day
     today = datetime.date.today()
-
+    
     # Retrieve the selected_date argument from the form request if it exists
     selected_date_str = request.args.get('selected_date')
     if selected_date_str:
