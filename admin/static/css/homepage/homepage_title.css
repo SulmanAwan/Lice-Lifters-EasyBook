@@ -1,0 +1,30 @@
+.title{
+    display: flex;
+    padding: 0;
+    margin: 0;
+    margin-left: 10.3vh;
+    flex-direction: column;
+    width: 75%;
+    border: 5px solid black;
+}
+
+.title h1{
+    margin: 0;
+    margin-top: 5vh;
+}
+
+.title hr {
+    border: none;
+    background-color: black;
+    margin: 8px 0 20px 0; 
+    width: 100%;
+    border: 2px solid black;
+}
+
+.title img{
+    align-items: flex-end;
+    width: 8vh;
+    height: 8vh;
+    flex-shrink: 0;
+    aspect-ratio: 1/1;
+}

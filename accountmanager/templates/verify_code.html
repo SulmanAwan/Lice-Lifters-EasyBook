@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Code{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="static/css/verify_code.css">
+{% endblock %}
+
+{% block content %}
+<div class="verify-container">
+    <div class="verify-box">
+        <h1 class="verify-title">Verify Code</h1>
+
+        <form method="POST" action="{{ url_for('account_manager.verify_code') }}">
+            <div class="form-group">
+                <label for="verification_code">Verification Code</label>
+                <input type="text" class="form-input" id="verification_code" name="verification_code" required>
+            </div>
+            <button type="submit" class="verify-btn">Verify</button>
+        </form>
+
+        <div class="create-account">
+            <p class="text"><a href="{{ url_for('account_manager.login') }}">Back to Login?</a></p> 
+        </div>
+    </div>
+</div>
+{% endblock %}

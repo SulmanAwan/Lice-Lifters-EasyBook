@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Lice Lifters EasyBook{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="static/css/home.css">
+{% endblock %}
+
+{% block content %}
+<div class="homepage-container">
+    <div class="heading-container">
+        <h1 class="heading-title">Welcome to Lice Lifters EasyBook</h1>
+        <p class="heading-text">
+            The easiest way to book your lice treatment appointments. No more phone calls, no more waiting.
+        </p>
+    </div>
+
+    <div class="info-container">
+        <div class="info">
+            <div class="info-icon">📅</div>
+            <h3 class="info-title">Easy Booking</h3>
+            <p class="info-text">Book appointments online with our interactive calendar.</p>
+        </div>
+        
+        <div class="info">
+            <div class="info-icon">💳</div>
+            <h3 class="info-title">Online Payments</h3>
+            <p class="info-text">Pay securely online with Stripe or pay in-store.</p>
+        </div>
+        
+        <div class="info">
+            <div class="info-icon">📱</div>
+            <h3 class="info-title">Appointment Management</h3>
+            <p class="info-text">Easily view, manage, or cancel your appointments from your account.</p>
+        </div>
+    </div>
+
+    <div class="services-container">
+        <div class="services-header">
+            <h2 class="services-title">About Our Services</h2>
+        </div>
+        <div class="services-body">
+            <h3>Head Lice Check - $40</h3>
+            <p>Comprehensive head checks by certified technicians at the Toms River clinic.</p>
+            <br>
+            
+            <h3>Head Lice Removal - $189</h3>
+            <p>Eliminate lice through the proven foam, comb, and rinse treatment process.</p>
+            
+            <p>Book an appointment today to commernce your path to being lice-free!</p>
+            <br><br>
+            <div class="text-center">
+                <a href="{{ url_for('account_manager.login') }}" class="book">Book Appointment Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

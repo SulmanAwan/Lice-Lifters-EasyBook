@@ -1,0 +1,21 @@
+.shift-header{
+    display: flex;
+    padding: 0;
+    margin: 0;
+    width: 80%;
+    flex-direction: column;
+}
+
+.shift-header h1{
+    margin: 0;
+    border: 5px solid black;
+}
+
+.shift-header hr {
+    border: none;
+    height: 20px;
+    background-color: black;
+    margin: 8px 0 20px 0; 
+    width: 52vh;
+    border: 2px solid black;
+}

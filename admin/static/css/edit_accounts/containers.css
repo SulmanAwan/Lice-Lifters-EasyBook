@@ -1,0 +1,15 @@
+.title-action-container{
+    display: flex;
+    
+    justify-content: center;
+}
+
+.form-container{
+    display: flex;
+    
+    margin-top: 5vh;
+    height: 40vh;
+    width: 60.2%;
+    margin-left: 36.5vh;
+    flex-direction: column;
+}

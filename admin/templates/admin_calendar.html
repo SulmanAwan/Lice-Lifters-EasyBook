@@ -1,0 +1,36 @@
+<div class="admin-calendar-container">
+    <div class="calendar-header">
+        <h2 id="month-year">{{ current_month_name }} {{ current_year }}</h2>
+    </div>
+    
+    <div class="calendar-weekdays">
+        <h1>Sun</h1>
+        <h1>Mon</h1>
+        <h1>Tue</h1>
+        <h1>Wed</h1>
+        <h1>Thu</h1>
+        <h1>Fri</h1>
+        <h1>Sat</h1>
+    </div>
+
+    <div class="calendar-days">
+        {% for week in calendar_weeks %}
+        <div class="week">
+            {% for day in week %}
+                {% if day.date %}
+                    <a href="{{ url_for('admin.admin_homepage', selected_date=day.date) }}" 
+                       {% if day.date == selected_date %}id="current"{% endif %}
+                       {% if day.class == 'blocked-day' %}id="block"{% endif %}
+                       {% if day.class == 'business-day' %}id="business-day"{% endif %}>
+                        {{ day.day }}
+                    </a>
+                {% else %}
+                    <a id="empty">
+                        &nbsp;
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>

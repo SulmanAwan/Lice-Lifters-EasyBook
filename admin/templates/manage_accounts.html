@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Accounts{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="static/css/manage_accounts/title.css">
+<link rel="stylesheet" type="text/css" href="static/css/manage_accounts/containers.css">
+<link rel="stylesheet" type="text/css" href="static/css/manage_accounts/table.css">
+{% endblock %}
+
+{% block content %}
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Manage Accounts</h1>
+            <hr>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('admin.add_accounts') }}" id="create">Create Account</a>
+            <a href="{{ url_for('admin.admin_homepage') }}" id="back">Back</a>
+        </div>
+    </div>
+
+    <div class="users-table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th id="left">ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Permission</th>
+                    <th id="right">Option</th>
+                </tr>
+            </thead>
+            
+            <tbody>
+                {% if users %}
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.user_id }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.password }}</td>
+                            <td>{{ user.permission }}</td>
+                            <td class="actions-cell">
+                                <a href="{{ url_for('admin.edit_account', user_id=user.user_id) }}" class="edit-btn">Modify</a>
+                                
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5">No users found</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

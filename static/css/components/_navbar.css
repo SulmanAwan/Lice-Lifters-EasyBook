@@ -1,0 +1,108 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.navbar {
+    width: 100%;
+    height: 103px;
+    flex-shrink: 0;
+    background: rgba(41, 147, 254, 0.40);
+    display: flex; 
+    align-items: center; 
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.navbar-logo {
+    width: 20%;
+    height: 100%;
+    margin-left: 11.5vh;
+}
+
+.navbar-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.navbar-links a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 40px;
+    padding: 10px 15px;   
+    margin: 0 10px;
+    color: black;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    padding-bottom: 13px;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.navbar-links a:hover {
+    color: blue;
+}
+
+.hamburger-menu {
+    display: none;
+    cursor: pointer;
+    margin-right: 20px;
+}
+
+.bar1, .bar2, .bar3 {
+    width: 30px;
+    height: 3px;
+    background-color: white;
+    margin: 6px 0;
+}
+
+@media screen and (max-width: 1050px) {
+    .navbar {
+        height: auto;
+        min-height: 70px;
+        flex-wrap: wrap;
+    }
+    
+    .navbar-logo {
+        margin-left: 20px;
+        width: 180px;
+        height: 40px;
+    }
+    
+    .hamburger-menu {
+        display: block;
+        margin-left: 35vh;
+    }
+    
+    .navbar-links {
+        display: none;
+        width: 500px;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+    }
+    
+    .navbar-links.active {
+        display: flex;
+    }
+    
+    .navbar-links a {
+        width: 100%;
+        padding: 10px 0;
+        margin: 0;
+        border-top: 1px solid white;
+    }
+    
+    .navbar-links a:last-child {
+        margin-right: 0px;
+    }
+}

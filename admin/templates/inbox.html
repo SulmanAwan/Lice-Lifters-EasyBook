@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="static/css/inbox/containers.css">
+<link rel="stylesheet" type="text/css" href="static/css/inbox/inbox_title.css">
+<link rel="stylesheet" type="text/css" href="static/css/inbox/inbox.css">
+{% endblock %}
+
+{% block content %}
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Inbox</h1>
+            <hr>
+        </div>
+        
+        <div class="actions">
+            <a href="{{ url_for('admin.admin_homepage') }}" id="back">Back</a>
+        </div>
+    </div>
+
+    <div class="inbox-container">
+        {% for request in requests %}
+        <div class="message-container">
+            <div class="blue"></div>
+            <div class="request">
+                <div class="field-row">
+                    <div class="label">Employee Name: </div>
+                    <div class="value">{{ request['name'] }}</div>
+                </div>
+                <div class="field-row">
+                    <div class="label">Change Type: </div>
+                    <div class="value">{{ request['request_type'] }}</div>
+                </div>
+                <div class="field-row">
+                    <div class="label">Shift Date: </div>
+                    <div class="value">{{ request['shift_date'] }}</div>
+                </div>
+                <div class="field-row">
+                    <div class="label">Shift Time: </div>
+                    <div class="value">{{ request['start_time'] }} - {{ request['end_time'] }}</div>
+                </div>
+                <div class="field-row">
+                    <div class="label">Reason for Change: </div>
+                    <div class="reason-box">{{ request['reason'] }}</div>
+                </div> 
+
+                <form action="{{ url_for('admin.mark_as_read', request_id=request['request_id']) }}" method="post" class="field-button">
+                    <button type="submit" id="read">
+                        Mark as read
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

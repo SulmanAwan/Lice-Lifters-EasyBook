@@ -1,0 +1,16 @@
+.current-date-header{
+    display: flex;
+    border: 5px solid black;
+    flex-wrap:wrap;
+    width: 80%;
+}
+
+#datetime{
+    color: #000;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 25px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin: 0px;
+}

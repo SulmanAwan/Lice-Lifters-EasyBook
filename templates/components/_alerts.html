@@ -1,0 +1,22 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} auto-dismiss">
+                    <b>{{ message }}</b>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.auto-dismiss').forEach(message => {
+                setTimeout(() => {
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 600);
+                }, 3000);
+            });
+            });
+        </script>
+    {% endif %}
+{% endwith %}

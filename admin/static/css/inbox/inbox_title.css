@@ -1,0 +1,87 @@
+.title{
+    display: flex;
+    padding: 0;
+    margin: 0;
+    flex-direction: column;
+    width: 75%;   
+}
+
+.title h1{
+    margin: 0;
+    margin-top: 5vh;
+}
+
+.title hr {
+    border: none;
+    background-color: black;
+    margin: 8px 0 20px 0; 
+    width: 100%;
+    border: 2px solid black;
+}
+
+.actions{
+    display: flex;
+    
+    width: 15%;
+    justify-content: right;
+}
+
+#back{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    border: 1px solid rgba(244, 0, 0, 0.8);
+    margin-top: 5.5vh;
+    background: rgb(213, 13, 13);
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    color: white;
+    width: 70%;
+    height: 56px;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+    text-align: center;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: normal;
+    text-decoration: none;
+}
+
+#read{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 244, 57, 0.8);
+    background: rgb(13, 213, 53);
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    color: white;
+    width: 15vh;
+    height: 5vh;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+    text-align: center;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: normal;
+    text-decoration: none;
+}
+
+
+#back:hover {
+    background-color: #ff0000;
+    transform: translateY(-5px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}

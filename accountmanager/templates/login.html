@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="static/css/login.css">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h1 class="login-title">EasyBook Login</h1>
+        
+        <form method="POST" action="{{ url_for('account_manager.login') }}">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" required>
+                <div class="forgot-password">
+                    <a href="{{ url_for('account_manager.forgot_password') }}">Forgot password?</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="login-btn">Log In</button>
+        </form>
+        
+        <div class="create-account">
+            <a href="{{ url_for('account_manager.create_account') }}">Create an account</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

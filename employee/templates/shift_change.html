@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Shift Change{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('employee.static', filename='css/req_shift_change/shift_change.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <div class="create-box">
+        <h1 class="create-title">Request Shift Change</h1>
+        <h2 class="create-subtitle">{{ display_date }}, {{ current_year }}</h2>
+
+        <form method="POST" action="{{ url_for('employee.shift_change', display_date=display_date, current_year=current_year, shift_id=shift_id) }}">
+            <div class="form-group">
+                <label for="change-type" id="prompt">Type of Change: </label>
+                
+                <div class="radio-group">
+                    <input type="radio" id="swap" name="change_type" value="swap" required>
+                    <label for="swap" class="radio-label">Swap Shift</label>
+                </div>
+                
+                <div class="radio-group">
+                    <input type="radio" id="cancel" name="change_type" value="cancel" required>
+                    <label for="cancel" class="radio-label">Cancel Shift</label>
+                </div>
+                
+                <div class="radio-group">
+                    <input type="radio" id="change" name="change_type" value="change_hours" required>
+                    <label for="change" class="radio-label">Change Shift Hours</label>
+                </div>
+                
+                <div class="radio-group">
+                    <input type="radio" id="other" name="change_type" value="other" required>
+                    <label for="other" class="radio-label">Other</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="reason" id="prompt">Reason for Change (Required):</label>
+                <textarea id="reason" name="reason" rows="10" cols="81" required></textarea>
+            </div>
+            
+            <button type="submit" class="create-btn">Submit</button>
+            <a href="{{ url_for('employee.employee_homepage') }}" class="back">Back to Homepage</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Accounts{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/edit_accounts/title.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/edit_accounts/form.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/edit_accounts/containers.css') }}">
+{% endblock %}
+
+
+{% block content %}
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Modify Credentials</h1>
+            <hr>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('admin.manage_accounts') }}" id="back">Back</a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" action="{{ url_for('admin.edit_account', user_id=user_id) }}">
+            <div class="form-group">
+                <label for="username">Name:</label>
+                <input type="text" id="name" name="name" class="form-input" value="{{ user_record['name'] }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email: </label>
+                <input type="email" id="email" name="email" class="form-input" value="{{ user_record['email'] }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password: </label>
+                <input type="password" id="password" name="password" class="form-input" value="{{ user_record['password'] }}" required>
+            </div>        
+
+            <div class="form-group">
+                <label for="permission">Permission: </label>
+                <select id="permission" name="permission" class="form-input" required>
+                    <option value="customer" {% if user_record['permission'] == 'customer' %}selected{% endif %}>Customer</option>
+                    <option value="employee" {% if user_record['permission'] == 'employee' %}selected{% endif %}>Employee</option>
+                    <option value="admin" {% if user_record['permission'] == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="submit-btn" id="create">Change</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+

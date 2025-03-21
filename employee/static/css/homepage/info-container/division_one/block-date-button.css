@@ -1,0 +1,29 @@
+.block-date-button{
+    display: flex;
+    border: 5px solid black;
+    width: 20%;
+}
+
+.block-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease;
+    width: 16vh;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #2993FE;
+    color: #FFF;
+    text-align: center;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    text-decoration: none;
+}

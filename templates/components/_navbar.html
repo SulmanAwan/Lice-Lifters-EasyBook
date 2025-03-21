@@ -1,0 +1,27 @@
+<div class="navbar">
+    <img src="/static/img/licelifters.png" alt="Logo" class="navbar-logo">
+    <div class="hamburger-menu">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+    </div>
+    
+    <div class="navbar-links">
+        <a href="{{ url_for('index') }}"">HOME</a>
+        <a href="https://liceliftersoceancounty.com/treatments">TREATMENT</a>
+        <a href="https://liceliftersoceancounty.com/insurance">INSURANCE</a>
+        <a href="https://liceliftersoceancounty.com/appointments">APPOINTMENTS</a>
+        <a href="https://liceliftersoceancounty.com/reviews">REVIEWS</a>
+        <a href="https://liceliftersoceancounty.com/products">PRODUCTS</a>
+        <a href="https://liceliftersoceancounty.com/faqs">FAQS</a>
+        <a href="https://liceliftersoceancounty.com/blog">BLOG</a>
+        <a href="https://liceliftersoceancounty.com/contact">CONTACT</a>
+    </div>
+</div>
+
+<script>
+    document.querySelector('.hamburger-menu').addEventListener('click', function() {
+        this.classList.toggle('change');
+        document.querySelector('.navbar-links').classList.toggle('active');
+    });
+</script>

@@ -1,0 +1,47 @@
+.blue{
+    background-color: #2993FE;
+    height: 100%;
+    height: auto;
+    width: 3vh;
+}
+
+.field-row{
+    display: flex;
+    margin-bottom: 5vh;
+    align-items: flex-start;
+}
+
+.field-button{
+    display: flex;
+    margin-bottom: 1vh;
+    align-items: flex-start;
+}
+
+.label{
+    text-align: left;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    margin-right: 2vh;
+
+    width: 180px;
+    flex-shrink: 0; 
+}
+
+.value{
+    text-align: left;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+}
+
+.request{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+    margin-left: 2vh;
+}

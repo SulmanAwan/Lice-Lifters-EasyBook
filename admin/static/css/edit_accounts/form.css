@@ -1,0 +1,46 @@
+.form-group{
+    display: flex;
+    margin-top: 0px;
+    
+    margin-bottom: 1vh;
+}
+
+.form-group label{
+    width: 100%;
+    height: 100%;
+    
+    text-align: left;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    text-decoration: none;
+}
+
+.form-group input{
+    width: 100%;
+    height: 3vh;
+    border: 2px solid #2993FE;
+    background: #FFF;
+
+
+}
+
+.form-group select{
+    width: 40%;
+    height: 3.75vh;
+    margin-right: 33.75vh;
+    border: 2px solid #2993FE;
+    background: #FFF;  
+}
+
+.form-input{
+    text-align: left;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    text-decoration: none;
+}

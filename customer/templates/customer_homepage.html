@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>You are in the customer homepage</h1>
+    <a href="{{ url_for('account_manager.logout') }}">Logout</a>
+{% endblock %}

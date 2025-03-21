@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Accounts{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="static/css/add_accounts/title.css">
+<link rel="stylesheet" type="text/css" href="static/css/add_accounts/containers.css">
+<link rel="stylesheet" type="text/css" href="static/css/add_accounts/form.css">
+{% endblock %}
+
+
+{% block content %}
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Add Account</h1>
+            <hr>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('admin.manage_accounts') }}" id="back">Back</a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" action="{{ url_for('admin.add_accounts') }}">
+            <div class="form-group">
+                <label for="username">Name:</label>
+                <input type="text" id="name" name="name" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email: </label>
+                <input type="email" id="email" name="email" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password: </label>
+                <input type="password" id="password" name="password" class="form-input" required>
+            </div>        
+
+            <div class="form-group">
+                <label for="permission">Permission: </label>
+                <select id="permission" name="permission" class="form-input">
+                    <option value="customer">Customer</option>
+                    <option value="employee">Employee</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="submit-btn" id="create">Create</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+

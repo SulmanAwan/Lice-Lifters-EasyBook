@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="static/css/create_account.css">
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <div class="create-box">
+        <h1 class="create-title">Create an Account</h1>
+        
+        <form method="POST" action="{{ url_for('account_manager.create_account') }}">
+            <div class="form-group">
+                <label for="username">Full Name</label>
+                <input type="text" id="name" name="name" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" required>
+            </div>
+            
+            <button type="submit" class="create-btn">Create Account</button>
+        </form>
+        
+        <div class="create-account">
+            <p class="text">Already have an account? <a href="{{ url_for('account_manager.login') }}">Login here</a></p> 
+        </div>
+    </div>
+</div>
+{% endblock %}

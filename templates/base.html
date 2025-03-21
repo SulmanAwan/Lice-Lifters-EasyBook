@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{% endblock %}</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/components/_alerts.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/components/_infobar.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/components/_navbar.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/components/_footer.css') }}">
+        {% block extra_css %}{% endblock %}
+    </head>
+    <body>
+        {% include 'components/_infobar.html' %}
+        {% include 'components/_navbar.html' %}
+        {% include 'components/_alerts.html' %}
+
+        <!--Main content-->
+        <div class="content-container">
+            {% block content %}
+            {% endblock %}
+        </div>
+        <!--End of main content-->
+
+        {% include 'components/_footer.html' %}
+        {% block scripts %}{% endblock %}
+    </body>
+</html>

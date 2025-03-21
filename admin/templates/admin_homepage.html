@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Homepage{% endblock %}
+
+{% block extra_css %} 
+<!--Homepage Styles-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/calendar-button-container/calendar.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/calendar-button-container/buttons.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/homepage_title.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/homepage_actions.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/homepage_containers.css">
+
+<!--Division 1-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_one/block-date-button.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_one/current-date-header.css">
+
+<!--Division 2-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_two/manage-shift-button.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_two/shift-header.css">
+
+<!--Division 3-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_three/shifts.css">
+
+<!--Division 5-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_five/bookings.css">
+{% endblock %}
+
+
+{% block content %}
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Hello {{ name }}</h1>
+            <hr>
+        </div>
+    
+        <div class="actions">
+            <a href="{{ url_for('admin.inbox') }}"><img src="static/img/inbox.png"></a>
+            <a href="{{ url_for('account_manager.logout') }}"><img src="static/img/logout.png"></a>
+        </div>
+    </div>
+
+    <div class="homepage-container">
+        <div class="calendar-button-container">
+            {% include 'admin_calendar.html' %}
+            
+            <div class="admin-buttons-container">
+                <a href="{{ url_for('admin.analytics_dashboard') }}" class="admin-button">
+                    Analytics Dashboard (not developed)
+                </a>
+                <a href="{{ url_for('admin.manage_accounts') }}" class="admin-button">
+                    Manage Accounts
+                </a>
+                <a href="{{ url_for('admin.booking_notifications') }}" class="admin-button">
+                    Booking Notifications (not developed)
+                </a>
+                <a href="{{ url_for('admin.appointment_history') }}" class="admin-button">
+                    Appointment History (not developed)
+                </a>
+            </div>
+        </div>
+    
+        <div class="info-container">
+            <!--Division one-->
+            <div class="date-label-container">
+                <div class="current-date-header">
+                    <h1 id="datetime"><b>{{ display_date }}<br>Open Time: </b>{{ business_hours }}</h1>
+                </div>
+                <div class="block-date-button">
+                    <form method="POST" action="{{ url_for('admin.toggle_block_date') }}">
+                        <input type="hidden" name="date" value="{{ selected_date }}">
+                        <input type="hidden" name="current_status" value="{{ 'blocked' if is_blocked else 'open' }}">
+                        <button type="submit" class="block-button">
+                            {% if is_blocked %}Unblock Date{% else %}Block Date{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>    
+            
+            <!--Division two-->
+            <div class="shift-label-container">
+                <div class="shift-header">
+                    <h1>Shifts</h1>
+                    <hr>
+                </div>
+                
+                <div class="manage-shift-button">
+                    <a href="{{ url_for('admin.manage_shift') }}" class="shift-button">
+                        Manage Shift
+                    </a>
+                </div>
+            </div>
+            
+            <!--Division three TODO LATER-->
+            <div class="shift-employees-container">
+                {% for shift in shifts %}
+                <div class="shifts">
+                    <div class="employee">Employee: {{ shift['employee_name'] }} </div>
+                    <div class="times">Shift: {{ shift['start_time'] }} - {{ shift['end_time'] }} </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!--Division four-->
+            <div class="bookings-label-container">
+                <div class="shift-header">
+                    <h1>Bookings</h1>
+                    <hr>
+                </div>
+            </div>
+
+            <!--Division five TODO LATER-->
+            <div class="bookings-container">
+                {% for book in bookings %}
+                <div class="bookings">
+                    Time: {{ book['start_time'] }} - {{ book['end_time'] }} <br>
+                    Name: {{ book['customer_name'] }} <br>
+                    Payment method: {{ book['payment_method'] }} <br>
+                    Type: {{ book['service_type'] }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+
+    </div>
+{% endblock %}

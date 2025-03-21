@@ -1,0 +1,30 @@
+.shifts {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #94C9FF;
+    border: 3px solid black;
+    border-radius: 20px;
+  }
+  
+  .employee {
+    color: #FFF;
+    font-size: 20px;
+    font-style: normal;
+    line-height: normal;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-weight: 500;
+  }
+  
+  .times {
+    color: #FFF;
+    font-size: 20px;
+    font-style: normal;
+    line-height: normal;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-weight: 500;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    text-align: right;
+  }

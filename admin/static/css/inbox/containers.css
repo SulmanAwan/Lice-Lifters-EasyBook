@@ -1,0 +1,40 @@
+.title-action-container{
+    display: flex;
+    justify-content: center;
+}
+
+.inbox-container{
+    display: flex;
+    min-height: 60vh;
+    height: auto;
+    flex-direction: column;
+    margin-top: 20px;
+    margin-left: 9vh;
+    margin-right: 9vh;
+    margin-bottom: 6vh;
+    gap: 6vh;
+}
+
+.message-container{
+    display: flex;
+    flex-direction: row;
+    height: auto;
+    width: 100%;
+}
+
+.reason-box {
+    border-radius: 20px;
+    width: 503px;
+    min-height: 100px;
+    height: auto;
+    margin-top: 5px;
+    
+    border: 1px solid #000;
+    background: #FFF;
+    padding: 10px;
+    
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    overflow: auto; 
+}

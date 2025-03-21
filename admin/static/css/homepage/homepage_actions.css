@@ -1,0 +1,16 @@
+.actions{
+    display: flex;
+    border: 5px solid black;
+    width: 15%;
+    margin-right: 10vh;
+    gap: 4vh;
+    justify-content: right;
+}
+
+.actions img{
+    width: 6vh;
+    height: 6vh;
+    flex-shrink: 0;
+    aspect-ratio: 1/1;
+    margin-top: 3vh;
+}
