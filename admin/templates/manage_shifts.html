@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Shifts{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/manage_shifts/manage_shifts.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="shifts-container">
+
+    <div class="title-action-container">
+        <div class="shifts-header">
+            <h1>Manage Shifts</h1>
+            <h2>{{ display_date }}</h2>
+            <hr>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('admin.admin_homepage', selected_date=selected_date) }}" class="back-btn">Back</a>
+        </div>
+        
+    </div>
+
+    {% if shifts %}
+        {% for shift in shifts %}
+        <div class="shift-entry">
+            <div class="shift-info">
+                <h3>Employee: {{ shift.employee_name }}</h3>
+                <h3>Shift: {{ shift.formatted_start_time }} - {{ shift.formatted_end_time }}</h3>
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin.update_shift', shift_id=shift.shift_id, selected_date=selected_date) }}" class="shift-form">
+                <div class="form-row">
+                    <label for="employee">Employee</label>
+                    <select id="employee" name="employee_id" class="form-select" required>
+                        {% for employee in employees %}
+                            <option value="{{ employee.user_id }}" {% if employee.user_id == shift.employee_id %}selected{% endif %}>
+                                {{ employee.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label for="start-time">Start time:</label>
+                    <div class="time-input">
+                        <input type="text" id="start-time" name="start_time" 
+                               value="{{ shift.start_time }}" class="form-input" required>
+                        <select name="start_period" class="period-select" required>
+                            <option value="AM" {% if shift.start_period == 'AM' %}selected{% endif %}>AM</option>
+                            <option value="PM" {% if shift.start_period == 'PM' %}selected{% endif %}>PM</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <label for="end-time">End time:</label>
+                    <div class="time-input">
+                        <input type="text" id="end-time" name="end_time" 
+                               value="{{ shift.end_time }}" class="form-input" required>
+                        <select name="end_period" class="period-select" required>
+                            <option value="AM" {% if shift.end_period == 'AM' %}selected{% endif %}>AM</option>
+                            <option value="PM" {% if shift.end_period == 'PM' %}selected{% endif %}>PM</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="change-btn">Change</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('admin.delete_shift', shift_id=shift.shift_id, selected_date=selected_date) }}" style="display: inline;">
+                <button type="submit" class="delete-btn">Delete</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <hr id="divider">
+    <div class="shift-add">
+        <div class="shift-title">
+            <h1 id="add-shift-title">Add New Shift</h1>
+        </div>
+        
+        <form method="POST" action="{{ url_for('admin.add_shift') }}" class="shift-form">
+            <input type="hidden" name="shift_date" value="{{ selected_date }}">
+            
+            <div class="form-row">
+                <label for="new-employee">Employee</label>
+                <select id="new-employee" name="employee_id" class="new-form-select" required>
+                    {% for employee in employees %}
+                        <option value="{{ employee.user_id }}">{{ employee.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="new-start-time">Start time:</label>
+                <div class="time-input">
+                    <input type="text" id="new-start-time" name="start_time" placeholder="9:00" class="new-form-input" required>
+                    <select name="start_period" class="new-period-select" required>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label for="new-end-time">End time:</label>
+                <div class="time-input">
+                    <input type="text" id="new-end-time" name="end_time" placeholder="5:00" class="new-form-input" required>
+                    <select name="end_period" class="new-period-select" required>
+                        <option value="AM">AM</option>
+                        <option value="PM" selected>PM</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="add-btn">Add</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
