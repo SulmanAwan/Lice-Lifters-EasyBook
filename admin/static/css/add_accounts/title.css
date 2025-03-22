@@ -4,7 +4,6 @@
     margin: 0;
     flex-direction: column;
     width: 45%;
-    
 }
 
 .title h1{
@@ -22,7 +21,6 @@
 
 .actions{
     display: flex;
-    
     width: 15%;
     justify-content: right;
 }
