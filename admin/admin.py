@@ -303,7 +303,7 @@ def get_shifts_for_date(date):
         # We will place the condition where the shift date is the current date and order the results by start_time
         # We order them because so when we display the shifts on the right side of the page they are in order easier to read.
         cursor.execute("""
-            SELECT s.start_time, s.end_time, u.name as employee_name
+            SELECT s.shift_id, s.start_time, s.end_time, u.name as employee_name
             FROM shifts s
             JOIN users u ON s.employee_id = u.user_id
             WHERE s.shift_date = %s
@@ -503,11 +503,6 @@ def analytics_dashboard():
     # TODO: implement dashboard
     return render_template('admin/analytics_dashboard.html')
 
-@admin.route('/manage_shift', methods=['GET', 'POST'])
-def manage_shift():
-    # TODO: implement manage shift
-    return render_template('admin_homepage.html')
-
 @admin.route('/add_accounts', methods=['GET', 'POST'])
 def add_accounts():
     # Handle form submission (POST REQ)
@@ -691,3 +686,199 @@ def mark_as_read(request_id):
 
     # re-render the inbox page (this time the request marked as read will not be shown to the admin)
     return redirect(url_for('admin.inbox'))
+
+@admin.route('/manage_shift/<selected_date>', methods=['GET'])
+def manage_shift(selected_date):
+    # Convert string date to datetime object
+    shift_date = datetime.datetime.strptime(selected_date, '%Y-%m-%d').date()
+    
+    # Format date for display
+    display_date = shift_date.strftime('%A, %B %d')
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get all shifts for the selected date store the shift_id, employee_id, start_time, end_time, and username in each record
+        cursor.execute("""
+            SELECT s.shift_id, s.employee_id, s.start_time, s.end_time, u.name as employee_name
+            FROM shifts s
+            JOIN users u ON s.employee_id = u.user_id
+            WHERE s.shift_date = %s
+            ORDER BY s.start_time
+        """, (shift_date,))
+        
+        shifts = cursor.fetchall()
+        
+        # Format times for display and form values
+        for shift in shifts:
+            # Get raw datetime.timedelta objects for form handling (this will require formating)
+            start_time = shift['start_time']
+            end_time = shift['end_time']
+            
+            # Format for display using the format_time method
+            shift['formatted_start_time'] = format_time(start_time) 
+            shift['formatted_end_time'] = format_time(end_time)
+            
+            # After we use the method, it will have the form '2:00 PM'
+            # We want to segment the time and the period so we split it on the delimiter
+            start_components = shift['formatted_start_time'].split(' ')
+            end_components = shift['formatted_end_time'].split(' ')
+
+            # We store the time component and the period components.
+            shift['start_time'] = start_components[0]
+            shift['start_period'] = start_components[1]
+
+            shift['end_time'] = end_components[0]
+            shift['end_period'] = end_components[1]
+
+        # Get all employee names so we can show them in the dropdown menue
+        # Also get the user_id so we know what the user_id is if the admin decides to modify an appointment
+        cursor.execute(
+            """
+            SELECT user_id, name
+            FROM users
+            WHERE permission = 'employee'
+            """
+        )
+        
+        employees = cursor.fetchall()
+        
+    except Exception as e:
+        # In case of error, display error and return empty shifts and employees lists
+        flash(f'Error fetching shift data: {str(e)}', 'error')
+        shifts = []
+        employees = []
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # render the page with the display date, the shifts, and the employees
+    # pass the selected_date back so we can continue to utilize it
+    return render_template('manage_shifts.html', 
+                          selected_date=selected_date,
+                          display_date=display_date,
+                          shifts=shifts,
+                          employees=employees)
+
+@admin.route('/update_shift/<int:shift_id>/<selected_date>', methods=['POST'])
+def update_shift(shift_id, selected_date):
+    # Get form data (any of these are subject to be modified/updated)
+    employee_id = request.form.get('employee_id')
+    start_time = request.form.get('start_time')
+
+    start_period = request.form.get('start_period')
+    end_time = request.form.get('end_time')
+    end_period = request.form.get('end_period')
+    
+    try:
+        # Since we will be updating the data in the database, we need to convert the format of the start time and endtime
+        # Currently the times are formatted as (H:M period [AM/PM])
+        # We will convert back into SQL TIME strings (formatted as H:M:S)
+        start_datetime = datetime.datetime.strptime(f"{start_time} {start_period}", "%I:%M %p")
+        end_datetime = datetime.datetime.strptime(f"{end_time} {end_period}", "%I:%M %p")
+
+        # Format as SQL TIME strings
+        formatted_start_time = start_datetime.strftime("%H:%M:%S")
+        formatted_end_time = end_datetime.strftime("%H:%M:%S")
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Update shift in database using the SQL TIME formatted times for the shift
+        cursor.execute("""
+            UPDATE shifts 
+            SET employee_id = %s, start_time = %s, end_time = %s
+            WHERE shift_id = %s
+        """, (employee_id, formatted_start_time, formatted_end_time, shift_id))
+        
+        # Commit changes and alert user of success
+        conn.commit()
+        flash('Shift updated successfully', 'success')
+
+    except Exception as e:
+        # In case of error flash message to user
+        flash(f'Error updating shift: {str(e)}', 'error')
+
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Render page again passing the selected_date so we can continue to utilize it
+    return redirect(url_for('admin.manage_shift', selected_date=selected_date))
+
+@admin.route('/add_shift', methods=['POST'])
+def add_shift():
+    # Get form data (this info will be added to the shifts table)
+    employee_id = request.form.get('employee_id')
+    shift_date = request.form.get('shift_date')
+    
+    start_time = request.form.get('start_time')
+    start_period = request.form.get('start_period')
+
+    end_time = request.form.get('end_time')
+    end_period = request.form.get('end_period')
+    
+    try:
+        # Parse dates and times so it conforms to the SQL TIME structure
+        shift_date_obj = datetime.datetime.strptime(shift_date, '%Y-%m-%d').date()
+
+        start_datetime = datetime.datetime.strptime(f"{start_time} {start_period}", "%I:%M %p")
+        end_datetime = datetime.datetime.strptime(f"{end_time} {end_period}", "%I:%M %p")
+
+        # Format as SQL TIME string
+        formatted_start_time = start_datetime.strftime("%H:%M:%S")
+        formatted_end_time = end_datetime.strftime("%H:%M:%S")
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Add shift to database
+        cursor.execute("""
+            INSERT INTO shifts (employee_id, shift_date, start_time, end_time)
+            VALUES (%s, %s, %s, %s)
+        """, (employee_id, shift_date_obj, formatted_start_time, formatted_end_time))
+        
+        # commit changes and alert user of succes
+        conn.commit()
+        flash('New shift added successfully', 'success')
+
+    except Exception as e:
+        # In case of error, flash msg
+        flash(f'Error adding shift: {str(e)}', 'error')
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Render the page again passing in the selected_date
+    return redirect(url_for('admin.manage_shift', selected_date=shift_date))
+
+@admin.route('/delete_shift/<int:shift_id>/<selected_date>', methods=['POST'])
+def delete_shift(shift_id, selected_date):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Delete the shift with the passed in shift_id
+        cursor.execute("DELETE FROM shifts WHERE shift_id = %s", (shift_id,))
+        
+        # Commit the change and alert the user of sucess
+        conn.commit()
+        flash('Shift deleted successfully', 'success')
+
+        # Render the page again with the selected date
+        return redirect(url_for('admin.manage_shift', selected_date=selected_date))
+    except Exception as e:
+        # In case of error flash the error msg
+        flash(f'Error deleting shift: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        conn.close()
+
+    # In case of error, we re-render the page so that the flash msg is displayed
+    return redirect(url_for('admin.manage_shift', selected_date=selected_date))

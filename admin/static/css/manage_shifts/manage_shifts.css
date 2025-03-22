@@ -1,0 +1,287 @@
+.shifts-container {
+    max-width: 800px;
+    margin: 30px auto 50px;
+    padding: 0 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+
+}
+
+.shifts-header {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+
+    margin-bottom: 40px;
+    width: 60vh;
+}
+
+.shifts-header hr {
+    border: none;
+    background-color: black;
+    margin: 0;
+    width: 50vh;
+    border: 2px solid black;
+}
+
+#divider{
+    border: none;
+    background-color: black;
+    margin-top: 3vh;
+    margin-bottom: 3vh;
+    width: 100%;
+
+    border: 2px solid black;
+}
+
+.title-action-container{
+    display: flex;
+}
+
+.actions{
+    display: flex;
+    width: 25%;
+    margin-right: 10vh;
+    margin-top: 2vh;
+    margin-left: 5vh;
+    gap: 4vh;
+    justify-content: right;
+}
+
+
+.shifts-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+
+}
+
+.shifts-header h2 {
+    margin: 5px 0 20px;
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 30px;
+    background-color: #E50B0E;
+    height: 20px;
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+
+    height: 30px;
+    width: 8vh;
+    font-size: 18px;
+    font-weight: 600;
+    border: 1px solid rgba(244, 0, 0, 0.8);
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background-color: #ff0000;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.shift-entry {
+    background-color: #E8F4FF;
+    border: 2px solid #2993FE;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.shift-add {
+    background-color: #b8ffbc;
+    border: 2px solid #4CAF50;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+}
+
+.shift-info {
+    background-color: #94C9FF;
+    border-radius: 10px;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#add-shift-title{
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+    font-family: "Delval Galanogrotesque", sans-serif;
+}
+
+.shift-title {
+    background-color: #4CAF50;
+    border-radius: 10px;
+    padding: 0px 10px;
+
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.shift-info h3 {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.shift-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: end;
+    margin-bottom: 15px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row label {
+    font-size: 16px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-input,
+.form-select {
+    padding: 8px 12px;
+    border: 2px solid #2993FE;
+    border-radius: 5px;
+
+    font-size: 16px;
+    width: 100%;
+}
+
+.new-form-input,
+.new-form-select{
+    padding: 8px 12px;
+    border: 2px solid #4CAF50;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 100%;
+}
+
+.time-input {
+    display: flex;
+    gap: 5px;
+}
+
+.time-input .form-input {
+    flex: 1;
+}
+
+.period-select {
+    width: 70px;
+    padding: 8px;
+    border: 2px solid #2993FE;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.new-period-select {
+    width: 70px;
+    padding: 8px;
+    border: 2px solid #4CAF50;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.change-btn {
+    background-color: #2993FE;
+    color: white;
+    border: none;
+
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 40px;
+    width: 100%;
+}
+
+.change-btn:hover {
+    background-color: #1c70c7;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.delete-form {
+    text-align: center;
+}
+
+.delete-btn {
+    background-color: #E50B0E;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 40px;
+    width: 240px;
+}
+
+.delete-btn:hover {
+    background-color: #ff0000;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.add-employee-btn,
+.add-shift-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 12px 15px;
+
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-employee-btn:hover,
+.add-shift-btn:hover {
+    background-color: #388e3c;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.add-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 40px;
+}
+
+.add-btn:hover {
+    background-color: #388e3c;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
