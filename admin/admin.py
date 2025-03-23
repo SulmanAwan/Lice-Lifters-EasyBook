@@ -488,11 +488,6 @@ def toggle_block_date():
     # (this will cause the page to render again but with the change being reflected in the calendar and in the text of the block day button)
     return redirect(url_for('admin.admin_homepage', selected_date=date_str))
 
-@admin.route('/booking_notifications', methods=['GET', 'POST'])
-def booking_notifications():
-    # TODO: implement booking notifications
-    return render_template('admin/booking_notifications.html')
-
 @admin.route('/appointment_history', methods=['GET', 'POST'])
 def appointment_history():
     # TODO: implement appointment history
@@ -882,3 +877,40 @@ def delete_shift(shift_id, selected_date):
 
     # In case of error, we re-render the page so that the flash msg is displayed
     return redirect(url_for('admin.manage_shift', selected_date=selected_date))
+
+@admin.route('/manage_bookings', methods=['GET', 'POST'])
+def manage_bookings():
+    # each time we enter this route we need to update the bookings table so appointment status are up to date
+    update_appointment_statuses() 
+
+    #TODO create filter backend
+    #TODO get data required to render page
+
+    return render_template('manage_bookings.html')
+
+
+
+
+def update_appointment_statuses():
+    # We need to update the appointments database each time we enter the manage_bookings page
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Update the bookings table appointment status based on current date and time
+        cursor.execute("""
+            UPDATE bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            SET b.appointment_status = 'past'
+            WHERE b.appointment_status = 'current' 
+            AND CONCAT(ts.slot_date, ' ', ts.end_time) < NOW()
+        """)
+        # We commit changes to database
+        conn.commit()
+
+    except Exception as e:
+        # If error happened we alert user
+        print(f"Error updating appointment statuses: {str(e)}")
+
+    finally:
+        cursor.close()
+        conn.close()

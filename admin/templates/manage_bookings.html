@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Bookings{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/manage_bookings/manage_bookings.css') }}">
+{% endblock %}
+
+
+{% block content %}
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Manage Bookings</h1>
+            <hr>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('admin.admin_homepage') }}" id="back">Back</a>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.manage_bookings') }}">
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="status-filter">Status:</label>
+                <select id="status-filter" name="status" class="filter-select">
+                <option value="all" selected>All</option>
+                <option value="current">Upcoming</option>
+                <option value="past">Past</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="date-filter">Date:</label>
+                <input type="date" id="date-filter" name="date" class="filter-input">
+            </div>
+            
+            <div class="filter-group">
+                <label for="service-filter">Service:</label>
+                <select id="service-filter" name="service" class="filter-select">
+                <option value="all" selected>All Services</option>
+                <option value="check">Head Lice Check</option>
+                <option value="removal">Head Lice Removal</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="rating-filter">Rating:</label>
+                <select id="rating-filter"  name="rating" class="filter-select">
+                <option value="any" selected>Any Rating</option>
+                <option value="5">★★★★★</option>
+                <option value="4">★★★★☆ & up</option>
+                <option value="3">★★★☆☆ & up</option>
+                </select>
+            </div>
+            
+            <div class="filter-group search">
+                <label for="search-input">Name:</label>
+                <input type="text" id="search-input" name="searchname" class="search-input" placeholder="Search by name...">
+            </div>
+
+            <div class="filter-group btn">
+                <button type="submit" class="submit-btn" id="search-btn">Filter</button>
+            </div>
+            
+        </div>
+    </form>
+{% endblock %}
+
