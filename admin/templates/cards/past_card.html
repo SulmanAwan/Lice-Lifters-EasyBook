@@ -1,0 +1,42 @@
+<div class="appointment-card past">
+    <div class="appointment-header">
+        <div class="appointment-date">{{ booking.slot_date }} <br> {{ booking.start_time }} - {{ booking.end_time }} </div>
+
+        {% if booking.rating != 'No rating' %}
+        <div class="appointment-rating">{{ booking.rating }}</div>
+        {% else %}
+        <div class="no-rating">No Rating</div>
+        {% endif %}
+    </div>
+
+    <div class="appointment-details">
+        <div class="detail-row">
+            <span class="detail-label">Customer:</span>
+            <span class="detail-value">{{ booking.customer_name }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Service:</span>
+            <span class="detail-value">{{ booking.service_type }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Payment:</span>
+            <span class="detail-value">{{ booking.payment_method }}</span>
+        </div>
+    </div>
+
+    {% if booking.comment %}
+    <div class="appointment-description">
+        <div class="description-preview">
+            {{ booking.comment[:40] }} ...
+        </div>
+        <div class="description-full" style="display:none">
+            {{ booking.comment }}
+        </div>
+        <button class="show-more-btn">Show More</button>
+    </div>
+    {% endif %}
+
+    <div class="card-actions">
+        <button class="modify-btn">Modify</button>
+    </div>
+</div>

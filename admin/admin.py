@@ -488,11 +488,6 @@ def toggle_block_date():
     # (this will cause the page to render again but with the change being reflected in the calendar and in the text of the block day button)
     return redirect(url_for('admin.admin_homepage', selected_date=date_str))
 
-@admin.route('/booking_notifications', methods=['GET', 'POST'])
-def booking_notifications():
-    # TODO: implement booking notifications
-    return render_template('admin/booking_notifications.html')
-
 @admin.route('/appointment_history', methods=['GET', 'POST'])
 def appointment_history():
     # TODO: implement appointment history
@@ -882,3 +877,169 @@ def delete_shift(shift_id, selected_date):
 
     # In case of error, we re-render the page so that the flash msg is displayed
     return redirect(url_for('admin.manage_shift', selected_date=selected_date))
+
+@admin.route('/manage_bookings', methods=['GET', 'POST'])
+def manage_bookings():
+    # each time we enter this route we need to update the bookings table so appointment status are up to date
+    update_appointment_statuses() 
+
+    # Set default values for the parameters (this is the default filter for when user loads up page)
+    status_filter = 'all' 
+    date_filter = None
+    service_filter = 'all'
+    rating_filter = 'any'
+    name_filter = None
+
+    # If it is a POST method, that means the filter settings may have changed, so we retrieve the new filter settings from form
+    if request.method == "POST":
+        status_filter = request.form.get('status', 'all')
+        date_filter = request.form.get('date', None)
+        service_filter = request.form.get('service', 'all')
+        rating_filter = request.form.get('rating', 'any')
+        name_filter = request.form.get('searchname', None)
+
+    # We need to query the database for the data based on the current filter settings:  
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        # Start building the base query, we will display the date, start_time, end_time, name, service type, payment method, appointment status, and comments
+        # We need to join the necessary tables to retrieve this data and include a WHERE clause so we can append additional queries
+        # Based on filter settings that may have been changed in a POST request
+        query = """
+            SELECT ts.slot_date, ts.start_time, ts.end_time,
+                   u.name as customer_name, bt.type_name as service_type,
+                   pt.payment_method, b.appointment_status,
+                   IFNULL(r.rating, 0) as rating,
+                   comment
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN users u ON b.customer_id = u.user_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            LEFT JOIN reviews r ON b.booking_id = r.booking_id
+            WHERE 1=1
+        """
+
+        # We will include all the additional filters in the new_filter list
+        new_filter = []
+
+        # If the status_filter != all then it means the user entered a new filter 
+        # We append the statement to the where clause and store the new status_filter in the list
+        if status_filter != 'all':
+            query += " AND b.appointment_status = %s"
+            new_filter.append(status_filter)
+        
+        # If the date_filter is not None then that means the user specified a date
+        # We append the where clause with to search only for the specified date and store the new date_filter in the list
+        if date_filter:
+            query += " AND ts.slot_date = %s"
+            new_filter.append(date_filter)
+        
+        # If the service_filter != all then that means the user specified a service type 
+        # We append to the where clause the condition that the service type matches and store the new service_filter in the list
+        if service_filter != 'all':
+            query += " AND bt.type_name = %s"
+            new_filter.append(service_filter)
+        
+        # If the rating_filter != any then it was changed from the default 
+        # We specify in the query to search only for the necessary rating and append the integer value of the new rating_filter
+        if rating_filter != 'any':
+            query += " AND (r.rating >= %s)"
+            new_filter.append(int(rating_filter))
+        
+        # If name_filter isn't none then we search for any name with contains the entered text
+        # and we append %name_filter% to the list (we need to have %% due to sql syntax when using LIKE)
+        # anything before %name_filter% anything after
+        if name_filter:
+            query += " AND u.name LIKE %s"
+            new_filter.append(f"%{name_filter}%")
+        
+        # We will order the results by date in descending order (so the newest bookings appear at the top)
+        # And start time in ascending order so the earliest times appear first
+        query += " ORDER BY ts.slot_date DESC, ts.start_time ASC"
+        
+        # We execute the query and pass in the values stored in the new_filters list (these are specified by user)
+        cursor.execute(query, new_filter)
+        bookings = cursor.fetchall()
+
+        # Format dates, times, and payment_method
+        for booking in bookings:
+
+            # Override the old slot_date (datatype DATE) with the formatted version
+            if booking['slot_date']:
+                booking['slot_date'] = booking['slot_date'].strftime('%B %d, %Y')
+            
+            # Override the old start/end times (datatype TIME) with the formatted versions
+            if booking['start_time']:
+                booking['start_time'] = format_time(booking['start_time'])
+                booking['end_time'] = format_time(booking['end_time'])
+            
+            # Format payment method to either in-store or online (don't specify the service used for online payment since not required)
+            if booking['payment_method'] == 'in_store':
+                booking['payment_method'] = 'In-store'
+            else:
+                booking['payment_method'] = 'Online'
+                
+            # Format stars for ratings
+            rating_value = booking['rating']
+            if rating_value > 0: # If user left a rating we create the number of dark stars and fill the rest of the space with empty stars
+                booking['rating'] = '★' * rating_value 
+                booking['rating'] = booking['rating'] + '☆' * (5 - rating_value)
+            else: # If user left no rating we store a string to indicate that
+                booking['rating'] = 'No rating'
+
+    except Exception as e:
+        # If we get an error we display error and return a empty bookings list
+        flash(f'Error fetching bookings: {str(e)}', 'error')
+        bookings = []
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+    # We render the page with each of the filters and the bookings dictionary (With contains the query result and necessary data to display for the admin)
+    return render_template('manage_bookings.html', 
+                           status_filter = status_filter,
+                           date_filter = date_filter,
+                           service_filter = service_filter,
+                           rating_filter = rating_filter,
+                           name_filter = name_filter,
+                           bookings = bookings)
+
+def update_appointment_statuses():
+    # We need to update the appointments database each time we enter the manage_bookings page
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Update the bookings table appointment status based on current date and time
+
+        # First check to ensure that all past bookings have the past status
+        cursor.execute("""
+            UPDATE bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            SET b.appointment_status = 'past'
+            WHERE b.appointment_status = 'current' 
+            AND CONCAT(ts.slot_date, ' ', ts.end_time) < NOW()
+        """)
+
+        # We also check to ensure that if any current bookings have been moved to the past then their status is changed
+        # We need to do this because the admin is allowed to modify bookings and if they change the date/time of a booking
+        # Such that it was upcoming previously and now it has a date/time that was in the past
+        cursor.execute("""
+            UPDATE bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            SET b.appointment_status = 'current'
+            WHERE b.appointment_status = 'past' 
+            AND CONCAT(ts.slot_date, ' ', ts.end_time) > NOW()
+        """)
+        # We commit changes to database
+        conn.commit()
+
+    except Exception as e:
+        # If error happened we alert user
+        print(f"Error updating appointment statuses: {str(e)}")
+
+    finally:
+        cursor.close()
+        conn.close()
