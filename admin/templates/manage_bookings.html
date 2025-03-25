@@ -4,6 +4,7 @@
 
 {% block extra_css %} 
 <link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/manage_bookings/manage_bookings.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/manage_bookings/cards.css') }}">
 {% endblock %}
 
 
@@ -24,46 +25,95 @@
             <div class="filter-group">
                 <label for="status-filter">Status:</label>
                 <select id="status-filter" name="status" class="filter-select">
-                <option value="all" selected>All</option>
-                <option value="current">Upcoming</option>
-                <option value="past">Past</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="current" {% if status_filter == 'current' %}selected{% endif %}>Upcoming</option>
+                    <option value="past" {% if status_filter == 'past' %}selected{% endif %}>Past</option>
                 </select>
             </div>
             
             <div class="filter-group">
                 <label for="date-filter">Date:</label>
-                <input type="date" id="date-filter" name="date" class="filter-input">
+                <input type="date" id="date-filter" name="date" class="filter-input" value="{{ date_filter }}">
             </div>
             
             <div class="filter-group">
                 <label for="service-filter">Service:</label>
                 <select id="service-filter" name="service" class="filter-select">
-                <option value="all" selected>All Services</option>
-                <option value="check">Head Lice Check</option>
-                <option value="removal">Head Lice Removal</option>
+                    <option value="all" {% if service_filter == 'all' %}selected{% endif %}>All Services</option>
+                    <option value="Lice Check" {% if service_filter == 'Lice Check' %}selected{% endif %}>Head Lice Check</option>
+                    <option value="Lice Removal" {% if service_filter == 'Lice Removal' %}selected{% endif %}>Head Lice Removal</option>
                 </select>
             </div>
             
             <div class="filter-group">
                 <label for="rating-filter">Rating:</label>
-                <select id="rating-filter"  name="rating" class="filter-select">
-                <option value="any" selected>Any Rating</option>
-                <option value="5">★★★★★</option>
-                <option value="4">★★★★☆ & up</option>
-                <option value="3">★★★☆☆ & up</option>
+                <select id="rating-filter" name="rating" class="filter-select">
+                    <option value="any" {% if rating_filter == 'any' %}selected{% endif %}>Any Rating</option>
+                    <option value="5" {% if rating_filter == '5' %}selected{% endif %}>★★★★★</option>
+                    <option value="4" {% if rating_filter == '4' %}selected{% endif %}>★★★★☆ & up</option>
+                    <option value="3" {% if rating_filter == '3' %}selected{% endif %}>★★★☆☆ & up</option>
                 </select>
             </div>
             
             <div class="filter-group search">
                 <label for="search-input">Name:</label>
-                <input type="text" id="search-input" name="searchname" class="search-input" placeholder="Search by name...">
+                <input type="text" id="search-input" name="searchname" class="search-input" 
+                       placeholder="Search by name..." value="{{ name_filter if name_filter else '' }}">
             </div>
 
             <div class="filter-group btn">
                 <button type="submit" class="submit-btn" id="search-btn">Filter</button>
             </div>
-            
         </div>
     </form>
+
+    <div class = "appointments-container">
+    {% if bookings %}
+        {% for booking in bookings%}
+                {% if booking.appointment_status == "current" %}
+                    {% include 'cards/current_card.html' %}
+                {% endif %}
+
+                {% if booking.appointment_status == "past" %}
+                    {% include 'cards/past_card.html' %}
+                {% endif %}
+        {% endfor %}
+    {% else %}
+        <h3 style="color:#2993FE">No Bookings Found</h3>
+    {% endif %}
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // We get the show more button
+        const showMoreButtons = document.querySelectorAll('.show-more-btn');
+        
+        // Add an eventlistener whose goal is to swap the preview and full texts and the button name
+        showMoreButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get the parent div
+                const descriptionContainer = this.closest('.appointment-description');
+                
+                // Get the child divs
+                const preview = descriptionContainer.querySelector('.description-preview');
+                const fullText = descriptionContainer.querySelector('.description-full');
+                
+                // Swap the visibility of preview and full text on click
+                if (preview.style.display !== 'none') {
+                    // Show full text when button is clicked and preview is being shown currently
+                    preview.style.display = 'none';
+                    fullText.style.display = 'block';
+                    this.textContent = 'Show Less';
+                } else {
+                    // Show preview when full text is being shown currently and button is clicked
+                    preview.style.display = 'block';
+                    fullText.style.display = 'none';
+                    this.textContent = 'Show More';
+                }
+            });
+        });
+    });
+    </script>
+
 {% endblock %}
 

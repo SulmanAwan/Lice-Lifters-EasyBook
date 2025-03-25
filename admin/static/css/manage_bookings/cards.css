@@ -1,0 +1,167 @@
+/* Appointment cards */
+.appointments-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 40px;
+  margin-left: 6vh;
+  margin-right: 6vh;
+  margin-bottom: 6vh;
+  margin-top: 4vh;
+}
+
+.appointment-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+}
+
+.appointment-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.appointment-card.current {
+  background-color: rgba(41, 147, 254, 0.15);
+  border-left: 4px solid #2993FE;
+}
+
+.appointment-card.past {
+  background-color: #f8f9fa;
+  border-left: 4px solid #6c757d;
+}
+
+/* Card header */
+.appointment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #dee2e6;
+  
+}
+
+.appointment-date {
+  margin-top: 3px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.appointment-rating {
+  color: #FFD700;
+  font-size: 18px;
+  text-shadow: 0 0 1px black;
+}
+
+.no-rating{
+  color: #333;
+  margin-top: 3px;
+}
+
+.appointment-status {
+  color: #2993FE;
+  font-weight: 600;
+  background-color: rgba(41, 147, 254, 0.1);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  height: 20px;
+}
+
+/* Card details */
+.appointment-details {
+  margin-bottom: 15px;
+}
+
+.detail-row {
+  margin-bottom: 8px;
+  display: flex;
+}
+
+.detail-label {
+  font-weight: 600;
+  min-width: 90px;
+  color: #555;
+}
+
+.detail-value {
+  color: #333;
+}
+
+/* Description */
+.appointment-description {
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 15px;
+  position: relative;
+}
+
+.description-preview {
+  display: block;
+  color: #555;
+  line-height: 1.5;
+}
+
+.appointment-description.expanded .description-preview {
+  display: none;
+}
+
+.appointment-description.expanded .description-full {
+  display: block;
+  max-height: 500px;
+}
+
+/* Show More button */
+.show-more-btn {
+  display: block;
+  background-color: transparent;
+  border: none;
+  color: #2993FE;
+  font-weight: 600;
+  padding: 8px 0 0 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.show-more-btn:hover {
+  color: #1c70c7;
+  text-decoration: underline;
+}
+
+.show-more-btn:focus {
+  outline: none;
+}
+
+.card-actions {
+  margin-top: auto; 
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Modify button */
+.modify-btn {
+  background-color: #2993FE;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2vh;
+}
+
+.modify-btn:hover {
+  background-color: #1c70c7;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+}
