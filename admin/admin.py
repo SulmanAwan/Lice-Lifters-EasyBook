@@ -767,6 +767,10 @@ def update_shift(shift_id, selected_date):
     start_period = request.form.get('start_period')
     end_time = request.form.get('end_time')
     end_period = request.form.get('end_period')
+
+    # Initialize connection and cursor as None, this is a placeholder cursor and connection
+    conn = None
+    cursor = None
     
     try:
         # Since we will be updating the data in the database, we need to convert the format of the start time and endtime
@@ -799,8 +803,11 @@ def update_shift(shift_id, selected_date):
         flash(f'Error updating shift: {str(e)}', 'error')
 
     finally:
-        cursor.close()
-        conn.close()
+        # Close cursor and connection if they were opened, this is to make sure it actually contained a cursor object and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
     
     # Render page again passing the selected_date so we can continue to utilize it
     return redirect(url_for('admin.manage_shift', selected_date=selected_date))
@@ -816,6 +823,10 @@ def add_shift():
 
     end_time = request.form.get('end_time')
     end_period = request.form.get('end_period')
+
+    # Initialize connection and cursor as None, this is a placeholder cursor and connection
+    conn = None
+    cursor = None
     
     try:
         # Parse dates and times so it conforms to the SQL TIME structure
@@ -847,8 +858,11 @@ def add_shift():
         flash(f'Error adding shift: {str(e)}', 'error')
     
     finally:
-        cursor.close()
-        conn.close()
+        # Close cursor and connection if they were opened, this is to make sure it actually contained a cursor object and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
     
     # Render the page again passing in the selected_date
     return redirect(url_for('admin.manage_shift', selected_date=shift_date))
