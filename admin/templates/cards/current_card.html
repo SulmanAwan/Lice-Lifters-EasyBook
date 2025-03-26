@@ -20,6 +20,6 @@
     </div>
 
     <div class="card-actions">
-        <button class="modify-btn">Modify</button>
+        <a href="{{ url_for('admin.modify_bookings', booking_id=booking.booking_id) }}" class="modify-btn">Modify</a>
     </div>
 </div>
