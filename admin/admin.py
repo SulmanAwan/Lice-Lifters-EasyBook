@@ -488,16 +488,6 @@ def toggle_block_date():
     # (this will cause the page to render again but with the change being reflected in the calendar and in the text of the block day button)
     return redirect(url_for('admin.admin_homepage', selected_date=date_str))
 
-@admin.route('/appointment_history', methods=['GET', 'POST'])
-def appointment_history():
-    # TODO: implement appointment history
-    return render_template('admin/appointment_history.html')
-
-@admin.route('/analytics_dashboard', methods=['GET'])
-def analytics_dashboard():
-    # TODO: implement dashboard
-    return render_template('admin/analytics_dashboard.html')
-
 @admin.route('/add_accounts', methods=['GET', 'POST'])
 def add_accounts():
     # Handle form submission (POST REQ)
@@ -1057,3 +1047,10 @@ def update_appointment_statuses():
     finally:
         cursor.close()
         conn.close()
+
+@admin.route('/analytics_dashboard', methods=['GET'])
+def analytics_dashboard():
+
+    # TODO: implement dashboard
+
+    return render_template('analytics_dashboard.html')
