@@ -1044,7 +1044,7 @@ def modify_bookings(booking_id):
         # Fetch the booking details from database using booking_id,
         # Get all column values that would be useful
         cursor.execute("""
-            SELECT b.booking_id, pt.transaction_id, ts.slot_date, ts.start_time, ts.end_time,
+            SELECT b.booking_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
                    u.name as customer_name, bt.type_name as service_type,
                    pt.payment_method, b.appointment_status,
                    pt.stripe_transaction_id as stripe_id
@@ -1072,6 +1072,22 @@ def modify_bookings(booking_id):
         """, (booking['slot_date'],))
 
         available_timeslots = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, slot_date, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            AND slot_id = %s
+        """, (booking['slot_date'], booking['slot_id'] ))
+
+        current_timeslot = cursor.fetchone()
+        current_timeslot['formatted_start_time'] = format_time(current_timeslot['start_time'])
+        current_timeslot['formatted_end_time'] = format_time(current_timeslot['end_time'])
+        current_timeslot['availability'] = current_timeslot['max_bookings'] - current_timeslot['current_bookings']
+
+        if current_timeslot['availability'] == 0:
+            current_timeslot['availability'] = "Full"
+
     
         # Format the start time and end time for each timeslot for the current day
         # Also calculate the availability of each timeslot
@@ -1079,6 +1095,7 @@ def modify_bookings(booking_id):
             slot['formatted_start_time'] = format_time(slot['start_time'])
             slot['formatted_end_time'] = format_time(slot['end_time'])
             slot['availability'] = slot['max_bookings'] - slot['current_bookings']
+            
 
         # If it is a POST request we need to update the values in the required tables and ensure that all the data is valid
         if request.method == 'POST':
@@ -1104,7 +1121,8 @@ def modify_bookings(booking_id):
     return render_template('modify_bookings.html', 
                            booking_id=booking_id,
                            booking=booking,
-                           available_timeslots=available_timeslots)
+                           available_timeslots=available_timeslots,
+                           current_timeslot=current_timeslot)
 
 @admin.route('/get_available_timeslots/<date>', methods=['GET'])
 def get_available_timeslots(date):

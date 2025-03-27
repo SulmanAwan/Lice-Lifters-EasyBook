@@ -34,15 +34,24 @@
         <div class="form-group">
             <label for="timeslot">Time:</label>
             <select id="timeslot" name="timeslot" class="form-input">
+                    <option value="{{ booking.slot_id }}">
+                        {{ current_timeslot.formatted_start_time }} - {{ current_timeslot.formatted_end_time }}
+                        {% if current_timeslot.availability == "Full" %}
+                            (Full)
+                        {% else %}
+                            ({{ current_timeslot.availability }} slots available)
+                        {% endif %}
+                    </option>
                 {% for slot in available_timeslots %}
                     <option value="{{ slot.slot_id }}" 
-                    {% if booking.start_time == slot.start_time and booking.end_time == slot.end_time %}selected{% endif %}>
+                    {% if booking.start_time == slot.start_time and booking.end_time == slot.end_time %}hidden{% endif %}>
                         {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
                         ({{ slot.availability }} slots available)
                     </option>
                 {% endfor %}
             </select>
         </div>
+        
         
         <div class="form-group">
             <label for="service_type">Service Type: </label>
