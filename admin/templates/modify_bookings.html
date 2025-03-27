@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Modify Booking{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/modify_bookings/modify_bookings.css') }}">
+{% endblock %}
+
+
+{% block content %}
+<div class="title-action-container">
+    <div class="title">
+        <h1>Modify Booking</h1>
+        <hr>
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('admin.manage_bookings') }}" id="back">Back</a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" action="{{ url_for('admin.modify_bookings', booking_id=booking_id) }}">
+        <div class="form-group">
+            <label for="customer_name">Name:</label>
+            <input type="text" id="customer_name" name="customer_name" value="{{ booking.customer_name }}" class="form-input" readonly>
+        </div>
+        
+        <div class="form-group">
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" value="{{ booking.formatted_date }}" class="form-input date-input">
+        </div>
+        
+        <div class="form-group">
+            <label for="timeslot">Time:</label>
+            <select id="timeslot" name="timeslot" class="form-input">
+                    <option value="{{ booking.slot_id }}">
+                        {{ current_timeslot.formatted_start_time }} - {{ current_timeslot.formatted_end_time }}
+                        {% if current_timeslot.availability == "Full" %}
+                            (Full)
+                        {% else %}
+                            ({{ current_timeslot.availability }} slots available)
+                        {% endif %}
+                    </option>
+                {% for slot in available_timeslots %}
+                    <option value="{{ slot.slot_id }}" 
+                    {% if booking.start_time == slot.start_time and booking.end_time == slot.end_time %}hidden{% endif %}>
+                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
+                        ({{ slot.availability }} slots available)
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        
+        <div class="form-group">
+            <label for="service_type">Service Type: </label>
+            <select id="service_type" name="service_type" class="form-input">
+                    <option value="Lice Check" {% if booking.service_type == 'Lice Check' %}selected{% endif %}>Lice Check</option>
+                    <option value="Lice Removal" {% if booking.service_type == 'Lice Removal' %}selected{% endif %}>Lice Removal</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="payment_method">Payment Method: </label>
+            <select id="payment_method" name="payment_method" class="form-input">
+                <option value="in_store" {% if booking.payment_method == 'In-store' %}selected{% endif %}>In-store</option>
+                <option value="stripe" {% if booking.payment_method == 'Online' %}selected{% endif %}>Online</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="stripe_id">Transaction ID (If applicable): </label>
+            <input type="text" id="stripe_id" name="stripe_id" class="form-input" {% if booking['stripe_id'] %} value="{{ booking['stripe_id'] }}" {% endif %}>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" id="create">Change</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the date and timeslot elements
+    const dateInput = document.getElementById('date');
+    const timeslotSelect = document.getElementById('timeslot');
+    
+    // Add event listener that detects changed in date
+    dateInput.addEventListener('change', function() {
+        const selectedDate = this.value;  // for each change we store the new date value
+        
+        // We will now get all the available timeslots for the selected date
+        fetch(`/admin/get_available_timeslots/${selectedDate}`)
+            .then(response => {
+                // if the response was not ok then we display the error and send the error text
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                // Swap the old inner html for the element with id timeslot with the new inner html rendered by the get_available_timeslots route 
+                timeslotSelect.innerHTML = html;
+            })
+            .catch(error => {
+                // check for any errors and override the rendered inner html with text indicating the error
+                console.error('Error fetching timeslots:', error);
+                timeslotSelect.innerHTML = '<option disabled selected>Error loading timeslots</option>';
+            });
+    });
+});
+</script>
+{% endblock %}
+

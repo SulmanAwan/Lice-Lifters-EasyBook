@@ -488,16 +488,6 @@ def toggle_block_date():
     # (this will cause the page to render again but with the change being reflected in the calendar and in the text of the block day button)
     return redirect(url_for('admin.admin_homepage', selected_date=date_str))
 
-@admin.route('/appointment_history', methods=['GET', 'POST'])
-def appointment_history():
-    # TODO: implement appointment history
-    return render_template('admin/appointment_history.html')
-
-@admin.route('/analytics_dashboard', methods=['GET'])
-def analytics_dashboard():
-    # TODO: implement dashboard
-    return render_template('admin/analytics_dashboard.html')
-
 @admin.route('/add_accounts', methods=['GET', 'POST'])
 def add_accounts():
     # Handle form submission (POST REQ)
@@ -921,7 +911,7 @@ def manage_bookings():
         # We need to join the necessary tables to retrieve this data and include a WHERE clause so we can append additional queries
         # Based on filter settings that may have been changed in a POST request
         query = """
-            SELECT ts.slot_date, ts.start_time, ts.end_time,
+            SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
                    u.name as customer_name, bt.type_name as service_type,
                    pt.payment_method, b.appointment_status,
                    IFNULL(r.rating, 0) as rating,
@@ -1052,8 +1042,139 @@ def update_appointment_statuses():
 
     except Exception as e:
         # If error happened we alert user
-        print(f"Error updating appointment statuses: {str(e)}")
+        flash(f'Error updating: {str(e)}', 'error')
 
     finally:
         cursor.close()
         conn.close()
+
+@admin.route('/modify_bookings/<int:booking_id>', methods=['GET', 'POST'])
+def modify_bookings(booking_id):
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Fetch the booking details from database using booking_id,
+        # Get all column values that would be useful
+        cursor.execute("""
+            SELECT b.booking_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
+                   u.name as customer_name, bt.type_name as service_type,
+                   pt.payment_method, b.appointment_status,
+                   pt.stripe_transaction_id as stripe_id
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN users u ON b.customer_id = u.user_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+        
+        booking = cursor.fetchone()
+
+        # Format the start time, end time, and date so it can be displayed in the html
+        booking['formatted_start_time'] = format_time(booking['start_time'])
+        booking['formatted_end_time'] = format_time(booking['end_time'])
+        booking['formatted_date'] = booking['slot_date'].strftime('%Y-%m-%d')
+
+        # Get all the timeslots for the current day
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, slot_date, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            AND current_bookings < max_bookings
+        """, (booking['slot_date'],))
+
+        available_timeslots = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, slot_date, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            AND slot_id = %s
+        """, (booking['slot_date'], booking['slot_id'] ))
+
+        current_timeslot = cursor.fetchone()
+        current_timeslot['formatted_start_time'] = format_time(current_timeslot['start_time'])
+        current_timeslot['formatted_end_time'] = format_time(current_timeslot['end_time'])
+        current_timeslot['availability'] = current_timeslot['max_bookings'] - current_timeslot['current_bookings']
+
+        if current_timeslot['availability'] == 0:
+            current_timeslot['availability'] = "Full"
+
+    
+        # Format the start time and end time for each timeslot for the current day
+        # Also calculate the availability of each timeslot
+        for slot in available_timeslots:
+            slot['formatted_start_time'] = format_time(slot['start_time'])
+            slot['formatted_end_time'] = format_time(slot['end_time'])
+            slot['availability'] = slot['max_bookings'] - slot['current_bookings']
+            
+
+        # If it is a POST request we need to update the values in the required tables and ensure that all the data is valid
+        if request.method == 'POST':
+            # Get form data
+            new_date = request.form.get('date')
+            new_timeslot_id = request.form.get('timeslot')
+            new_service_type = request.form.get('service_type')
+            new_payment_method = request.form.get('payment_method')
+            new_stripe_id = request.form.get('stripe_id')
+
+            #TODO: update the necessary tables.
+
+    except Exception as e:
+        # In case of error, we alert the user and take them back to the manage_bookings page
+        flash(f'Error processing booking: {str(e)}', 'error')
+        return redirect(url_for('admin.manage_bookings'))
+        
+    finally:
+        cursor.close()
+        conn.close()
+
+    # In case of GET request we always render the template with the booking information and timeslot information
+    return render_template('modify_bookings.html', 
+                           booking_id=booking_id,
+                           booking=booking,
+                           available_timeslots=available_timeslots,
+                           current_timeslot=current_timeslot)
+
+@admin.route('/get_available_timeslots/<date>', methods=['GET'])
+def get_available_timeslots(date):
+    try:
+        # Convert string date to datetime object
+        date_obj = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get available timeslots for the selected date
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            ORDER BY start_time
+        """, (date_obj,))
+        
+        timeslots = cursor.fetchall()
+        
+        # Format the start time and end time for display and calculate the availability
+        for slot in timeslots:
+            slot['formatted_start_time'] = format_time(slot['start_time'])
+            slot['formatted_end_time'] = format_time(slot['end_time'])
+            slot['availability'] = slot['max_bookings'] - slot['current_bookings']
+
+        
+        # Render just the options HTML for the timeslot dropdown (this will be the new timeslots for the new)
+        return render_template('timeslot_options.html', timeslots=timeslots)
+    
+    except Exception as e:
+        return f"<option disabled selected>Error: {str(e)}</option>"  
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin.route('/analytics_dashboard', methods=['GET'])
+def analytics_dashboard():
+    # TODO: implement dashboard
+    return render_template('analytics_dashboard.html')

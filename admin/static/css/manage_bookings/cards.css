@@ -158,6 +158,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   margin-top: 2vh;
+  text-decoration: none;
 }
 
 .modify-btn:hover {
