@@ -488,16 +488,6 @@ def toggle_block_date():
     # (this will cause the page to render again but with the change being reflected in the calendar and in the text of the block day button)
     return redirect(url_for('admin.admin_homepage', selected_date=date_str))
 
-@admin.route('/appointment_history', methods=['GET', 'POST'])
-def appointment_history():
-    # TODO: implement appointment history
-    return render_template('admin/appointment_history.html')
-
-@admin.route('/analytics_dashboard', methods=['GET'])
-def analytics_dashboard():
-    # TODO: implement dashboard
-    return render_template('admin/analytics_dashboard.html')
-
 @admin.route('/add_accounts', methods=['GET', 'POST'])
 def add_accounts():
     # Handle form submission (POST REQ)
@@ -767,6 +757,10 @@ def update_shift(shift_id, selected_date):
     start_period = request.form.get('start_period')
     end_time = request.form.get('end_time')
     end_period = request.form.get('end_period')
+
+    # Initialize connection and cursor as None, this is a placeholder cursor and connection
+    conn = None
+    cursor = None
     
     try:
         # Since we will be updating the data in the database, we need to convert the format of the start time and endtime
@@ -799,8 +793,11 @@ def update_shift(shift_id, selected_date):
         flash(f'Error updating shift: {str(e)}', 'error')
 
     finally:
-        cursor.close()
-        conn.close()
+        # Close cursor and connection if they were opened, this is to make sure it actually contained a cursor object and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
     
     # Render page again passing the selected_date so we can continue to utilize it
     return redirect(url_for('admin.manage_shift', selected_date=selected_date))
@@ -816,6 +813,10 @@ def add_shift():
 
     end_time = request.form.get('end_time')
     end_period = request.form.get('end_period')
+
+    # Initialize connection and cursor as None, this is a placeholder cursor and connection
+    conn = None
+    cursor = None
     
     try:
         # Parse dates and times so it conforms to the SQL TIME structure
@@ -847,8 +848,11 @@ def add_shift():
         flash(f'Error adding shift: {str(e)}', 'error')
     
     finally:
-        cursor.close()
-        conn.close()
+        # Close cursor and connection if they were opened, this is to make sure it actually contained a cursor object and connection
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
     
     # Render the page again passing in the selected_date
     return redirect(url_for('admin.manage_shift', selected_date=shift_date))
@@ -907,7 +911,7 @@ def manage_bookings():
         # We need to join the necessary tables to retrieve this data and include a WHERE clause so we can append additional queries
         # Based on filter settings that may have been changed in a POST request
         query = """
-            SELECT ts.slot_date, ts.start_time, ts.end_time,
+            SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
                    u.name as customer_name, bt.type_name as service_type,
                    pt.payment_method, b.appointment_status,
                    IFNULL(r.rating, 0) as rating,
@@ -1038,8 +1042,281 @@ def update_appointment_statuses():
 
     except Exception as e:
         # If error happened we alert user
-        print(f"Error updating appointment statuses: {str(e)}")
+        flash(f'Error updating: {str(e)}', 'error')
 
     finally:
         cursor.close()
         conn.close()
+
+@admin.route('/modify_bookings/<int:booking_id>', methods=['GET', 'POST'])
+def modify_bookings(booking_id):
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Fetch the booking details from database using booking_id
+        cursor.execute("""
+            SELECT b.booking_id, b.customer_id, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
+                   u.name as customer_name, bt.type_name as service_type, bt.price,
+                   pt.payment_method, b.appointment_status, pt.amount,
+                   pt.stripe_transaction_id as stripe_id
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN users u ON b.customer_id = u.user_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+        
+        booking = cursor.fetchone()
+        
+        if not booking:
+            flash('Booking not found', 'error')
+            return redirect(url_for('admin.manage_bookings'))
+
+        # Format the start time, end time, and date
+        booking['formatted_start_time'] = format_time(booking['start_time'])
+        booking['formatted_end_time'] = format_time(booking['end_time'])
+        booking['formatted_date'] = booking['slot_date'].strftime('%Y-%m-%d')
+
+        if booking['payment_method'] == 'in_store':
+            booking['payment_method'] = 'In-store'
+        else:
+            booking['payment_method'] = 'Online'
+
+        # Get all the timeslots for the current day
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, slot_date, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            AND current_bookings < max_bookings
+        """, (booking['slot_date'],))
+
+        available_timeslots = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, slot_date, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            AND slot_id = %s
+        """, (booking['slot_date'], booking['slot_id']))
+
+        current_timeslot = cursor.fetchone()
+        current_timeslot['formatted_start_time'] = format_time(current_timeslot['start_time'])
+        current_timeslot['formatted_end_time'] = format_time(current_timeslot['end_time'])
+        current_timeslot['availability'] = current_timeslot['max_bookings'] - current_timeslot['current_bookings']
+
+        if current_timeslot['availability'] == 0:
+            current_timeslot['availability'] = "Full"
+    
+        # Format the start time and end time for each timeslot
+        for slot in available_timeslots:
+            slot['formatted_start_time'] = format_time(slot['start_time'])
+            slot['formatted_end_time'] = format_time(slot['end_time'])
+            slot['availability'] = slot['max_bookings'] - slot['current_bookings']
+            
+        # Get service types for dropdown
+        cursor.execute("SELECT type_id, type_name, price FROM booking_types")
+        service_types = cursor.fetchall()
+
+        # If it is a POST request we need to update the values
+        if request.method == 'POST':
+            # Get form data (the new timeslot, new service type, new payment method, new stripe id)
+            new_timeslot_id = request.form.get('timeslot')
+            new_service_type = request.form.get('service_type')
+            new_payment_method = request.form.get('payment_method')
+            new_stripe_id = request.form.get('stripe_id', None)
+            
+            # Check if there was a change in the timeslot id 
+            if int(new_timeslot_id) != booking['slot_id']:
+                # If there is a change in the timeslot id then a new timeslot was chosen so we decrement current bookings in the old timeslot
+                cursor.execute("""
+                    UPDATE time_slots
+                    SET current_bookings = current_bookings - 1
+                    WHERE slot_id = %s
+                """, (booking['slot_id'],))
+                
+                # And increment the current bookings in the new timeslot
+                cursor.execute("""
+                    UPDATE time_slots
+                    SET current_bookings = current_bookings + 1
+                    WHERE slot_id = %s
+                """, (new_timeslot_id,))
+            
+            # The form returns the actual name of the service, we need the id and the price of the service
+            cursor.execute("""
+                SELECT type_id, price FROM booking_types
+                WHERE type_name = %s
+            """, (new_service_type,))
+            
+            service_type_result = cursor.fetchone()
+            
+            new_service_type_id = service_type_result['type_id']
+            new_price = service_type_result['price']
+            
+            # Check if we're changing the service type
+            if new_service_type_id != booking['type_id']:
+                # Update the payment_transactions table with the price of the new service
+                cursor.execute("""
+                    UPDATE payment_transactions
+                    SET amount = %s
+                    WHERE transaction_id = %s
+                """, (new_price, booking['transaction_id']))
+            
+            # Check if payment method has changed or if the stripe id has changed
+            payment_update_needed = (new_payment_method != booking['payment_method'])
+            stripe_update_needed = (new_stripe_id != booking['stripe_id'] and new_stripe_id is not None)
+            
+            if payment_update_needed or stripe_update_needed:
+                cursor.execute("""
+                    UPDATE payment_transactions
+                    SET payment_method = %s, stripe_transaction_id = %s
+                    WHERE transaction_id = %s
+                """, (new_payment_method, new_stripe_id, booking['transaction_id']))
+            
+            # Finally, update the booking record with the new timeslot id and new service type id
+            cursor.execute("""
+                UPDATE bookings
+                SET slot_id = %s, type_id = %s
+                WHERE booking_id = %s
+            """, (new_timeslot_id, new_service_type_id, booking_id))
+            
+            # Commit all changes
+            conn.commit()
+
+
+            # If everything was succcesful then the update was valid and we alert that to the user
+            flash('Booking updated successfully', 'success')
+            return redirect(url_for('admin.manage_bookings'))
+
+    except Exception as e:
+        # Rollback transaction in case of error (this makes sure that if the database crashes midway through the process then
+        # data integrity is still kept)
+        conn.rollback()
+
+        # In case of error, we alert the user and take them back to the manage_bookings page
+        flash(f'Error processing booking: {str(e)}', 'error')
+        return redirect(url_for('admin.manage_bookings'))
+        
+    finally:
+        cursor.close()
+        conn.close()
+
+    # In case of GET request we always render the template with the booking information and timeslot information
+    return render_template('modify_bookings.html', 
+                           booking_id=booking_id,
+                           booking=booking,
+                           available_timeslots=available_timeslots,
+                           current_timeslot=current_timeslot,
+                           service_types=service_types)
+
+@admin.route('/get_available_timeslots/<date>', methods=['GET'])
+def get_available_timeslots(date):
+    try:
+        # Get the booking ID from the query parameter
+        booking_id = request.args.get('booking_id')
+        
+        # Convert string date to datetime object
+        date_obj = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get available timeslots for the selected date
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            ORDER BY start_time
+        """, (date_obj,))
+        
+        timeslots = cursor.fetchall()
+        
+        # Get current booking slot information if booking_id is provided
+        current_slot_id = None
+        
+        
+        # Format the start time and end time for display and calculate the availability
+        for slot in timeslots:
+            slot['formatted_start_time'] = format_time(slot['start_time'])
+            slot['formatted_end_time'] = format_time(slot['end_time'])
+            
+            # Calculate availability
+            if current_slot_id and slot['slot_id'] == current_slot_id:
+                # This slot belongs to the current booking, so add 1 to availability
+                slot['availability'] = slot['max_bookings'] - slot['current_bookings'] + 1
+            else:
+                slot['availability'] = slot['max_bookings'] - slot['current_bookings']
+        
+        # Filter available timeslots
+        available_timeslots = []
+        for slot in timeslots:
+            # Include the slot if:
+            # 1. It has availability > 0, OR
+            # 2. It's the current booking's slot (even if full)
+            if slot['availability'] > 0 or (current_slot_id and slot['slot_id'] == current_slot_id):
+                available_timeslots.append(slot)
+        
+        # Render just the options HTML for the timeslot dropdown
+        return render_template('timeslot_options.html', timeslots=available_timeslots)
+    
+    except Exception as e:
+        return f"<option disabled selected>Error: {str(e)}</option>"  
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin.route('/delete_booking/<int:booking_id>', methods=['POST'])
+def delete_booking(booking_id):
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+
+        # Get the slot record and transaction record that will be deleted alongside the booking record
+        cursor.execute("""
+            SELECT b.slot_id, b.transaction_id 
+            FROM bookings b
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+        
+        booking = cursor.fetchone()
+        
+        # Decrement the current_bookings count in the time_slots table corresponding to the booking
+        cursor.execute("""
+            UPDATE time_slots
+            SET current_bookings = current_bookings - 1
+            WHERE slot_id = %s
+        """, (booking['slot_id'],))
+
+        # Delete the booking record before the payment record since it has foreign key constraint
+        cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
+        
+        # Delete the payment record that corresponds to the booking
+        cursor.execute("DELETE FROM payment_transactions WHERE transaction_id = %s", (booking['transaction_id'],))
+        
+        # Commit changes
+        conn.commit()
+        
+        # If it was a success, indicate to user
+        flash('Booking deleted successfully', 'success')
+        
+    except Exception as e:
+        # If there is any error, rollback and display error
+        conn.rollback()
+        flash(f'Error deleting booking: {str(e)}', 'error')
+        
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Re-render the manage_bookings page
+    return redirect(url_for('admin.manage_bookings'))
+
+@admin.route('/analytics_dashboard', methods=['GET'])
+def analytics_dashboard():
+    # TODO: implement dashboard
+    return render_template('analytics_dashboard.html')
