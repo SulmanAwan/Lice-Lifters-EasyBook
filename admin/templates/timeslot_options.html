@@ -3,9 +3,11 @@
         <option value="{{ slot.slot_id }}">
             {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
             ({{ slot.availability }} slots available)
+            {{booking_id}}
         </option>
     {% endif %}
 {% endfor %}
 {% if timeslots|length == 0 %}
     <option disabled selected>No available timeslots for this date</option>
 {% endif %}
+

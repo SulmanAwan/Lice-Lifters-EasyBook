@@ -20,7 +20,7 @@
 </div>
 
 <div class="form-container">
-    <form method="POST" action="{{ url_for('admin.modify_bookings', booking_id=booking_id) }}">
+    <form method="POST" id="booking-form" data-booking-id="{{ booking_id }}" action="{{ url_for('admin.modify_bookings', booking_id=booking_id) }}">
         <div class="form-group">
             <label for="customer_name">Name:</label>
             <input type="text" id="customer_name" name="customer_name" value="{{ booking.customer_name }}" class="form-input" readonly>
@@ -52,7 +52,6 @@
             </select>
         </div>
         
-        
         <div class="form-group">
             <label for="service_type">Service Type: </label>
             <select id="service_type" name="service_type" class="form-input">
@@ -68,11 +67,15 @@
                 <option value="stripe" {% if booking.payment_method == 'Online' %}selected{% endif %}>Online</option>
             </select>
         </div>
+        
+        <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
 
         <div class="form-group">
             <label for="stripe_id">Transaction ID (If applicable): </label>
             <input type="text" id="stripe_id" name="stripe_id" class="form-input" {% if booking['stripe_id'] %} value="{{ booking['stripe_id'] }}" {% endif %}>
         </div>
+
+        <input type="hidden" name="booking_id" id="booking_id" value="{{ booking_id }}">
         
         <div class="form-actions">
             <button type="submit" id="create">Change</button>
@@ -81,35 +84,35 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get the date and timeslot elements
-    const dateInput = document.getElementById('date');
-    const timeslotSelect = document.getElementById('timeslot');
-    
-    // Add event listener that detects changed in date
-    dateInput.addEventListener('change', function() {
-        const selectedDate = this.value;  // for each change we store the new date value
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the date and timeslot elements
+        const dateInput = document.getElementById('date');
+        const timeslotSelect = document.getElementById('timeslot');
         
-        // We will now get all the available timeslots for the selected date
-        fetch(`/admin/get_available_timeslots/${selectedDate}`)
-            .then(response => {
-                // if the response was not ok then we display the error and send the error text
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.text();
-            })
-            .then(html => {
-                // Swap the old inner html for the element with id timeslot with the new inner html rendered by the get_available_timeslots route 
-                timeslotSelect.innerHTML = html;
-            })
-            .catch(error => {
-                // check for any errors and override the rendered inner html with text indicating the error
-                console.error('Error fetching timeslots:', error);
-                timeslotSelect.innerHTML = '<option disabled selected>Error loading timeslots</option>';
-            });
+        // Add event listener that detects changed in date
+        dateInput.addEventListener('change', function() {
+            const selectedDate = this.value;  // for each change we store the new date value
+            
+            // We will now get all the available timeslots for the selected date
+            fetch(`/admin/get_available_timeslots/${selectedDate}`)
+                .then(response => {
+                    // if the response was not ok then we display the error and send the error text
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // Swap the old inner html for the element with id timeslot with the new inner html rendered by the get_available_timeslots route 
+                    timeslotSelect.innerHTML = html;
+                })
+                .catch(error => {
+                    // check for any errors and override the rendered inner html with text indicating the error
+                    console.error('Error fetching timeslots:', error);
+                    timeslotSelect.innerHTML = '<option disabled selected>Error loading timeslots</option>';
+                });
+        });
     });
-});
 </script>
 {% endblock %}
 
