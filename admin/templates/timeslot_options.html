@@ -1,13 +1,10 @@
 {% for slot in timeslots %}
-    {% if slot.availability > 0 %}
+    {% if slot.availability > 0 or (booking_id and booking.slot_id == slot.slot_id) %}
         <option value="{{ slot.slot_id }}">
-            {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
-            ({{ slot.availability }} slots available)
-            {{booking_id}}
+            {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }} ({{ slot.availability }}/{{ slot.max_bookings}})
         </option>
     {% endif %}
 {% endfor %}
 {% if timeslots|length == 0 %}
     <option disabled selected>No available timeslots for this date</option>
 {% endif %}
-

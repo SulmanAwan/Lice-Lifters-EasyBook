@@ -1200,6 +1200,9 @@ def modify_bookings(booking_id):
 @admin.route('/get_available_timeslots/<date>', methods=['GET'])
 def get_available_timeslots(date):
     try:
+        # Get the booking ID from the query parameter
+        booking_id = request.args.get('booking_id')
+        
         # Convert string date to datetime object
         date_obj = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         
@@ -1217,15 +1220,33 @@ def get_available_timeslots(date):
         
         timeslots = cursor.fetchall()
         
+        # Get current booking slot information if booking_id is provided
+        current_slot_id = None
+        
+        
         # Format the start time and end time for display and calculate the availability
         for slot in timeslots:
             slot['formatted_start_time'] = format_time(slot['start_time'])
             slot['formatted_end_time'] = format_time(slot['end_time'])
-            slot['availability'] = slot['max_bookings'] - slot['current_bookings']
-
+            
+            # Calculate availability
+            if current_slot_id and slot['slot_id'] == current_slot_id:
+                # This slot belongs to the current booking, so add 1 to availability
+                slot['availability'] = slot['max_bookings'] - slot['current_bookings'] + 1
+            else:
+                slot['availability'] = slot['max_bookings'] - slot['current_bookings']
         
-        # Render just the options HTML for the timeslot dropdown (this will be the new timeslots for the new)
-        return render_template('timeslot_options.html', timeslots=timeslots)
+        # Filter available timeslots
+        available_timeslots = []
+        for slot in timeslots:
+            # Include the slot if:
+            # 1. It has availability > 0, OR
+            # 2. It's the current booking's slot (even if full)
+            if slot['availability'] > 0 or (current_slot_id and slot['slot_id'] == current_slot_id):
+                available_timeslots.append(slot)
+        
+        # Render just the options HTML for the timeslot dropdown
+        return render_template('timeslot_options.html', timeslots=available_timeslots)
     
     except Exception as e:
         return f"<option disabled selected>Error: {str(e)}</option>"  

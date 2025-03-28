@@ -39,14 +39,13 @@
                         {% if current_timeslot.availability == "Full" %}
                             (Full)
                         {% else %}
-                            ({{ current_timeslot.availability }} slots available)
+                            ({{ current_timeslot.availability }}/{{ current_timeslot.max_bookings}})
                         {% endif %}
                     </option>
                 {% for slot in available_timeslots %}
                     <option value="{{ slot.slot_id }}" 
                     {% if booking.start_time == slot.start_time and booking.end_time == slot.end_time %}hidden{% endif %}>
-                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
-                        ({{ slot.availability }} slots available)
+                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }} ({{ slot.availability }}/{{ slot.max_bookings}})
                     </option>
                 {% endfor %}
             </select>
@@ -84,35 +83,47 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get the date and timeslot elements
-        const dateInput = document.getElementById('date');
-        const timeslotSelect = document.getElementById('timeslot');
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the date and timeslot elements
+    const dateInput = document.getElementById('date');
+    const timeslotSelect = document.getElementById('timeslot');
+    const bookingId = document.getElementById('booking_id').value;
+    
+    // Store the original date and selected timeslot when the page loads
+    const originalDate = dateInput.value;
+    const originalTimeslotId = timeslotSelect.value;
+    const originalTimeslotHtml = timeslotSelect.innerHTML;
+    
+    // Add event listener that detects changes in date
+    dateInput.addEventListener('change', function() {
+        const selectedDate = this.value;  // for each change we store the new date value
         
-        // Add event listener that detects changed in date
-        dateInput.addEventListener('change', function() {
-            const selectedDate = this.value;  // for each change we store the new date value
-            
-            // We will now get all the available timeslots for the selected date
-            fetch(`/admin/get_available_timeslots/${selectedDate}`)
-                .then(response => {
-                    // if the response was not ok then we display the error and send the error text
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    // Swap the old inner html for the element with id timeslot with the new inner html rendered by the get_available_timeslots route 
-                    timeslotSelect.innerHTML = html;
-                })
-                .catch(error => {
-                    // check for any errors and override the rendered inner html with text indicating the error
-                    console.error('Error fetching timeslots:', error);
-                    timeslotSelect.innerHTML = '<option disabled selected>Error loading timeslots</option>';
-                });
-        });
+        // If returning to the original date, restore the original timeslot options
+        if (selectedDate === originalDate) {
+            timeslotSelect.innerHTML = originalTimeslotHtml;
+            return;
+        }
+        
+        // For other dates, fetch available timeslots
+        fetch(`/admin/get_available_timeslots/${selectedDate}?booking_id=${bookingId}`)
+            .then(response => {
+                // if the response was not ok then we display the error and send the error text
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                // Swap the old inner html for the element with id timeslot with the new inner html rendered by the get_available_timeslots route 
+                timeslotSelect.innerHTML = html;
+            })
+            .catch(error => {
+                // check for any errors and override the rendered inner html with text indicating the error
+                console.error('Error fetching timeslots:', error);
+                timeslotSelect.innerHTML = '<option disabled selected>Error loading timeslots</option>';
+            });
     });
+});
 </script>
 {% endblock %}
 
