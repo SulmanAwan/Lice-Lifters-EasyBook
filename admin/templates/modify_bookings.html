@@ -20,7 +20,7 @@
 </div>
 
 <div class="form-container">
-    <form method="POST" action="{{ url_for('admin.modify_bookings', booking_id=booking_id) }}">
+    <form method="POST" id="booking-form" data-booking-id="{{ booking_id }}" action="{{ url_for('admin.modify_bookings', booking_id=booking_id) }}">
         <div class="form-group">
             <label for="customer_name">Name:</label>
             <input type="text" id="customer_name" name="customer_name" value="{{ booking.customer_name }}" class="form-input" readonly>
@@ -39,19 +39,17 @@
                         {% if current_timeslot.availability == "Full" %}
                             (Full)
                         {% else %}
-                            ({{ current_timeslot.availability }} slots available)
+                            ({{ current_timeslot.availability }}/{{ current_timeslot.max_bookings}})
                         {% endif %}
                     </option>
                 {% for slot in available_timeslots %}
                     <option value="{{ slot.slot_id }}" 
                     {% if booking.start_time == slot.start_time and booking.end_time == slot.end_time %}hidden{% endif %}>
-                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
-                        ({{ slot.availability }} slots available)
+                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }} ({{ slot.availability }}/{{ slot.max_bookings}})
                     </option>
                 {% endfor %}
             </select>
         </div>
-        
         
         <div class="form-group">
             <label for="service_type">Service Type: </label>
@@ -68,11 +66,15 @@
                 <option value="stripe" {% if booking.payment_method == 'Online' %}selected{% endif %}>Online</option>
             </select>
         </div>
+        
+        <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
 
         <div class="form-group">
             <label for="stripe_id">Transaction ID (If applicable): </label>
             <input type="text" id="stripe_id" name="stripe_id" class="form-input" {% if booking['stripe_id'] %} value="{{ booking['stripe_id'] }}" {% endif %}>
         </div>
+
+        <input type="hidden" name="booking_id" id="booking_id" value="{{ booking_id }}">
         
         <div class="form-actions">
             <button type="submit" id="create">Change</button>
@@ -85,13 +87,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the date and timeslot elements
     const dateInput = document.getElementById('date');
     const timeslotSelect = document.getElementById('timeslot');
+    const bookingId = document.getElementById('booking_id').value;
     
-    // Add event listener that detects changed in date
+    // Store the original date and selected timeslot when the page loads
+    const originalDate = dateInput.value;
+    const originalTimeslotId = timeslotSelect.value;
+    const originalTimeslotHtml = timeslotSelect.innerHTML;
+    
+    // Add event listener that detects changes in date
     dateInput.addEventListener('change', function() {
         const selectedDate = this.value;  // for each change we store the new date value
         
-        // We will now get all the available timeslots for the selected date
-        fetch(`/admin/get_available_timeslots/${selectedDate}`)
+        // If returning to the original date, restore the original timeslot options
+        if (selectedDate === originalDate) {
+            timeslotSelect.innerHTML = originalTimeslotHtml;
+            return;
+        }
+        
+        // For other dates, fetch available timeslots
+        fetch(`/admin/get_available_timeslots/${selectedDate}?booking_id=${bookingId}`)
             .then(response => {
                 // if the response was not ok then we display the error and send the error text
                 if (!response.ok) {

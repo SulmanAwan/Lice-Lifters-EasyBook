@@ -141,9 +141,10 @@
 }
 
 .card-actions {
-  margin-top: auto; 
+  margin-top: auto;
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 /* Modify button */
@@ -163,6 +164,27 @@
 
 .modify-btn:hover {
   background-color: #1c70c7;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Delete button */
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2vh;
+  margin-left: 10px;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
   transform: translateY(-2px);
   box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
 }

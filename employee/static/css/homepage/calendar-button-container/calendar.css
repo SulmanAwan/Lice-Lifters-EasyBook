@@ -75,10 +75,7 @@
 }
 
 #completed {
-    background: rgba(144, 238, 144, 0.6);
-    pointer-events: none;  
-    cursor: default;      
-    user-select: none;     
+    background: rgba(144, 238, 144, 0.6); 
 }
 
 #current{
