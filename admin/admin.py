@@ -1256,12 +1256,12 @@ def delete_booking(booking_id):
             SET current_bookings = current_bookings - 1
             WHERE slot_id = %s
         """, (booking['slot_id'],))
+
+        # Delete the booking record before the payment record since it has foreign key constraint
+        cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
         
         # Delete the payment record that corresponds to the booking
         cursor.execute("DELETE FROM payment_transactions WHERE transaction_id = %s", (booking['transaction_id'],))
-
-        # Delete the booking record
-        cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
         
         # Commit changes
         conn.commit()
