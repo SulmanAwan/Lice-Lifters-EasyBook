@@ -1245,7 +1245,8 @@ def get_available_timeslots(date):
             
             # Calculate availability
             if current_slot_id and slot['slot_id'] == current_slot_id:
-                # This slot belongs to the current booking, so add 1 to availability
+                # This slot belongs to the current booking, so add 1 to availability (so that it passes the condition in the
+                # html and allows the current booking to be displayed when user goes back to the original date if its full)
                 slot['availability'] = slot['max_bookings'] - slot['current_bookings'] + 1
             else:
                 slot['availability'] = slot['max_bookings'] - slot['current_bookings']

@@ -39,13 +39,14 @@
                         {% if current_timeslot.availability == "Full" %}
                             (Full)
                         {% else %}
-                            ({{ current_timeslot.availability }}/{{ current_timeslot.max_bookings}})
+                            ({{ current_timeslot.availability }} slots left)
                         {% endif %}
                     </option>
                 {% for slot in available_timeslots %}
                     <option value="{{ slot.slot_id }}" 
                     {% if booking.start_time == slot.start_time and booking.end_time == slot.end_time %}hidden{% endif %}>
-                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }} ({{ slot.availability }}/{{ slot.max_bookings}})
+                        {{ slot.formatted_start_time }} - {{ slot.formatted_end_time }}
+                        ({{slot.availability}} slots left)
                     </option>
                 {% endfor %}
             </select>
@@ -98,13 +99,14 @@ document.addEventListener('DOMContentLoaded', function() {
     dateInput.addEventListener('change', function() {
         const selectedDate = this.value;  // for each change we store the new date value
         
-        // If returning to the original date, restore the original timeslot options
+        // When we are returning to the original date, restore the original timeslot options
         if (selectedDate === originalDate) {
             timeslotSelect.innerHTML = originalTimeslotHtml;
             return;
+
         }
         
-        // For other dates, fetch available timeslots
+        // For other dates, fetch available timeslots, pass in selected date and booking id to the route to process the html
         fetch(`/admin/get_available_timeslots/${selectedDate}?booking_id=${bookingId}`)
             .then(response => {
                 // if the response was not ok then we display the error and send the error text
