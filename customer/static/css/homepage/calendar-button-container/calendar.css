@@ -65,10 +65,14 @@
 .week a:hover{
     border-radius: 20px;
     background: #2993FE;
+    
 }
 
 #block{
     background: rgba(0, 0, 0, 0.20);
+    pointer-events: none;
+    cursor: default;
+
 }
 
 #current{

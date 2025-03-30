@@ -44,6 +44,9 @@ def customer_homepage():
     
     # Check if the selected date is blocked (Used for how the 'block' button will be displayed)
     is_blocked = check_if_date_blocked(selected_date)
+
+    # Get all the available timeslots for the selected_date and render them in the page
+    available_timeslots = get_available_timeslots_for_date(selected_date)
     
     # Finaally we pass in all the data required to render the homepage components (calendar, shifts, bookings, etc)
     return render_template('customer_homepage.html', 
@@ -54,7 +57,8 @@ def customer_homepage():
                           current_month=current_month, # The current month number (1-12)
                           current_year=current_year, # The current year (YYYY)
                           current_month_name=current_month_name, # The current month name (ie: January)
-                          is_blocked=is_blocked) # Boolean value indicating if the selected_date is blocked or not (used for configuring button text)
+                          is_blocked=is_blocked,    # Boolean value indicating if the selected_date is blocked or not (used for configuring button text)
+                          available_timeslots=available_timeslots)  # Available timeslots for the selected date
 
 
 def generate_calendar(year, month, selected_date):
@@ -215,7 +219,79 @@ def check_if_date_blocked(date):
     # We return the boolean value indicating if the date is blocked or not
     return blocked
 
+def format_time(datetime_delta):
+    # Helper method for converting the TIME datatypes from the database (HH:MM:SS) to a 12-hour string format with AM/PM
+
+    # We get the datetime_delta objects from the database and convert them to seconds
+    total_seconds = datetime_delta.total_seconds() 
+
+    # We convert the total seconds to hours and minutes and parse them into integers (no longer objects)
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    
+    # Now that we have the hours we can determine whether the passed in time is AM or PM
+    if hours < 12:
+        period = "AM"
+    else:
+        period = "PM"
+
+    # We need to convert the hours from military time to a 12-hour format
+    display_hours = hours % 12
+
+    # If the hours are 0 it means it is 12 o clock and we need to display it as 12 instead of 0
+    if display_hours == 0:
+        display_hours = 12
+    
+    # We return a formatted string that contains the time in the format 'HH:MM AM/PM'
+    return f"{display_hours}:{minutes:02d} {period}"
+
+def get_available_timeslots_for_date(date):
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get the available timeslots for the selected date (current_bookings < max_bookings)
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, current_bookings, max_bookings
+            FROM time_slots
+            WHERE slot_date = %s AND current_bookings < max_bookings
+            ORDER BY start_time
+        """, (date,))
+        
+        timeslots = cursor.fetchall()
+        
+        # Format times for display and calculate the available timeslots
+        for slot in timeslots:
+            slot['start_time'] = format_time(slot['start_time'])
+            slot['end_time'] = format_time(slot['end_time'])
+
+            slot['available_slots'] = slot['max_bookings'] - slot['current_bookings']
+        
+    except Exception as e:
+        # In the case of error display it to user
+        flash(f'Error fetching available timeslots: {str(e)}', 'error')
+        timeslots = []
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Return the list of open timeslots for the selected date so it can be rendered in the page
+    return timeslots
 
 @customer.route('/manage_appointments', methods=['GET', 'POST'])
-def  manage_appointments():
+def manage_appointments():
     return render_template('manage_appointments.html') 
+
+@customer.route('/book_appointment', methods=['GET','POST'])
+def book_appointment():
+    selected_date = request.form['selected_date']
+    slot_id = request.form['slot_id']
+    user_id = session.get('user_id')
+
+    return render_template('book_appointment.html', 
+                           selected_date=selected_date,
+                           slot_id=slot_id,
+                           user_id=user_id)
