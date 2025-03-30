@@ -863,6 +863,9 @@ def delete_shift(shift_id, selected_date):
     cursor = conn.cursor(dictionary=True)
     
     try:
+        # Delete the shift change requests associated with the shift_id, if not deleted will cause foreign key error
+        cursor.execute("DELETE FROM shift_change_requests WHERE shift_id = %s", (shift_id,))
+       
         # Delete the shift with the passed in shift_id
         cursor.execute("DELETE FROM shifts WHERE shift_id = %s", (shift_id,))
         
