@@ -1,0 +1,118 @@
+/* ENTIRE HOMEPAGE CONTAINER*/
+.homepage-container{
+    display:flex;
+    margin-bottom: 2vh;
+    height: auto;
+    border: 5px solid black;
+    gap: 3vh;
+}
+
+.title-action-container{
+    display: flex;
+}
+
+/* BIG CONTAINER #1 */
+/* This is the big container with the calendar and action buttons */
+.calendar-button-container{
+    display: flex;
+    flex-direction: column;
+    border: 5px solid black;
+    width: 80vh;
+    height: auto;
+    margin-left: 10vh;
+    
+}
+
+/* This is the container with the customer link */
+.customer-link-container {
+    border: 5px solid black;
+    width: 100%; 
+    height: auto;
+    margin-top: 3vh;
+}
+
+/* This is the container with the calendar */
+.customer-calendar-container {
+    border: 5px solid purple;
+    width: 100%; 
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 3vh;
+}
+
+/* BIG CONTAINER #2 */
+.info-container{
+    display: flex;
+    border: 5px solid black;
+    width: 80vh;
+    height: auto;
+    flex-direction: column;
+}
+
+.current-date-header{
+    display: flex;
+    border: 5px solid black;
+    flex-wrap:wrap;
+    width: 100%;
+}
+
+#datetime{
+    color: #000;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 25px;
+    line-height: normal;
+    margin: 0px;
+    font-weight: 400;
+    margin-top: 1vh;
+}
+
+.date-label-container{
+    display: flex;
+    border: 5px solid black;
+    width: 100%;
+    height: 5vh;
+    margin-top: 3vh;
+}
+
+.shift-label-container{
+    display: flex;
+    border: 5px solid black;
+    width: 100%;
+    height: 5vh;
+    margin-top: 3vh;
+}
+
+.shift-employees-container{
+    display: flex;
+    border: 5px solid black;
+    width: 100%;
+    min-height: 20vh;
+    flex-direction: column;
+    height: auto;
+    margin-top: 3vh;
+    flex-wrap: wrap;
+}
+
+.bookings-label-container{
+    display: flex;
+    border: 5px solid black;
+    width: 100%;
+    height: 5vh;
+    margin-top: 3vh;
+}
+
+.bookings-container{
+    display: flex;
+    border: 5px solid black;
+    width: 100%;
+    min-height: 34vh;
+    height: auto;
+    margin-top: 3vh;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5vh;
+}
+

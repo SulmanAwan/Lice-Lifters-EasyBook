@@ -2,7 +2,49 @@
 
 {% block title %}Home{% endblock %}
 
+{% block extra_css %} 
+<!--Homepage Styles-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/calendar-button-container/calendar.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/calendar-button-container/buttons.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/homepage_title.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/homepage_actions.css">
+<link rel="stylesheet" type="text/css" href="static/css/homepage/homepage_containers.css">
+
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/date_container.css">
+{% endblock %}
+
 {% block content %}
-    <h1>You are in the customer homepage</h1>
-    <a href="{{ url_for('account_manager.logout') }}">Logout</a>
+    <div class="title-action-container">
+        <div class="title">
+            <h1>Hello {{ name }}</h1>
+            <hr>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('account_manager.logout') }}"><img src="static/img/logout.png"></a>
+        </div>
+    </div>
+
+    <div class="homepage-container">
+        <div class="calendar-button-container">
+            {% include 'calendar/customer_calendar.html' %}
+            <div class = "customer-link-container">
+                <div id="click-link">Click <a href="{{ url_for('customer.manage_appointments') }}">here</a> to manage your appointments.</div>
+            </div>
+        </div>
+
+        <div class="info-container">
+            <div class="date-label-container">
+                <div class="current-date-header">
+                    <h1 id="datetime"><b>{{ display_date }}<br>
+                </div>
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
 {% endblock %}

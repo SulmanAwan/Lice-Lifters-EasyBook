@@ -1,0 +1,22 @@
+.logout-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.logout-link a {
+    color: #4682B4;
+    text-decoration: none;
+}
+
+.logout-link a:hover {
+    text-decoration: underline;
+}
+
+#click-link {
+    color: #000;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    line-height: normal;
+    font-weight: 400;
+    margin-top: 1vh;
+}

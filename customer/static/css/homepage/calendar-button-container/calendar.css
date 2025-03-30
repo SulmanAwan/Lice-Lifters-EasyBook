@@ -1,0 +1,87 @@
+.calendar-header {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+}
+
+.calendar-weekdays{
+    display: flex;
+    flex-direction: row;
+    border: 5px solid red;
+    justify-content: space-around;
+    
+}
+
+.calendar-weekdays h1{
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    margin: 0px;
+    padding: 10px;
+    font-weight: 600;
+    border: 1px solid black;
+}
+
+.calendar-days{
+    display: flex;
+    flex-direction: column;
+    border: 1px solid black;
+    width: 100%;
+    min-height: 36vh;
+    height: auto;
+}
+
+.week{
+    display: flex;
+    height: 6vh;
+    border: 1px solid red;
+    justify-content: space-around;
+    align-items: center;
+    margin: 6.5px;
+}
+
+.week a{
+    display: flex;
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    border-radius: 20px;
+    text-decoration: none;
+
+    color: #FFF;
+    text-align: center;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 22px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.week a:hover{
+    border-radius: 20px;
+    background: #2993FE;
+}
+
+#block{
+    background: rgba(0, 0, 0, 0.20);
+}
+
+#current{
+    background: #2993FE;
+}
+
+#business-day{
+    background: rgba(41, 147, 254, 0.50);
+}
+
+
+#empty{
+    background: white;
+    pointer-events: none;
+    cursor: default;
+}
