@@ -88,18 +88,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get the date and timeslot elements
     const dateInput = document.getElementById('date');
     const timeslotSelect = document.getElementById('timeslot');
-    const bookingId = document.getElementById('booking_id').value;
     
     // Store the original date and selected timeslot when the page loads
     const originalDate = dateInput.value;
-    const originalTimeslotId = timeslotSelect.value;
     const originalTimeslotHtml = timeslotSelect.innerHTML;
     
     // Add event listener that detects changes in date
     dateInput.addEventListener('change', function() {
         const selectedDate = this.value;  // for each change we store the new date value
         
-        // When we are returning to the original date, restore the original timeslot options
+        // When we are returning to the original date (ie when user clicks on the original date) we restore the original timeslot options
         if (selectedDate === originalDate) {
             timeslotSelect.innerHTML = originalTimeslotHtml;
             return;
@@ -107,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // For other dates, fetch available timeslots, pass in selected date and booking id to the route to process the html
-        fetch(`/admin/get_available_timeslots/${selectedDate}?booking_id=${bookingId}`)
+        fetch(`/admin/get_available_timeslots/${selectedDate}`)
             .then(response => {
                 // if the response was not ok then we display the error and send the error text
                 if (!response.ok) {
