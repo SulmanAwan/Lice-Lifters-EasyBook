@@ -1053,4 +1053,102 @@ def analytics_dashboard():
 
     # TODO: implement dashboard
 
+    # Values defined as 0
+    lice_check_revenue = 0;
+    lice_removal_revenue = 0;
+    total_booking = 0;
+    missed_appointment = 0;
+    rating_amount = 0;
+
+    # Made to have string asscoiated to variables
+    days = {
+    "Sunday": Sunday_tracker,
+    "Monday": Monday_tracker,
+    "Tuesday": Tuesday_tracker,
+    "Wednesday": Wednesday_tracker,
+    "Thursday": Thursday_tracker,
+    "Friday": Friday_tracker,
+    "Saturday": Saturday_tracker
+    }
+
+    time_slot = {
+
+    }
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Combines tables REVIEWS, BOOKING, BOOKING TYPES, and TIME SLOTS
+    cursor.execute("""
+        SELECT *
+        FROM bookings
+        LEFT JOIN reviews
+        ON bookings.customer_id = reviews.customer_id
+        LEFT JOIN booking_types
+        ON bookings.type_id = booking_types.type_id
+        LEFT JOIN time_slots
+        ON bookings.slot_id = time_slots.slot_id
+        UNION
+        SELECT *
+        FROM bookings
+        RIGHT JOIN reviews
+        ON bookings.customer_id = reviews.customer_id
+        RIGHT JOIN booking_types
+        ON bookings.type_id = booking_types.type_id
+        RIGHT JOIN time_slots
+        ON bookings.slot_id = time_slots.slot_id
+                   """)
+
+    total_records = cursor.fetchall()
+    
+    for i in total_records:
+        total_booking += 1
+
+        # Note to delete, ask what possible values can be in database to ensure correctness
+        # Note, have to use column index to get column value in the row being i, starts at 0 being the first
+        # Checks if appointment was answered or missed
+        if i[5] == "Missed":
+            missed_appointment += 1
+        # Tracks appointment associated with each day
+        if i[15] == "Sunday":
+            Sunday_tracker += 1
+        elif i[15] == "Monday":
+            Monday_tracker += 1
+        elif i[15] == "Tuesday":
+            Tuesday_tracker += 1
+        elif i[15] == "Wednesday":
+            Wednesday_tracker += 1
+        elif i[15] == "Thursday":
+            Thursday_tracker += 1
+        elif i[15] == "Friday":
+            Friday_tracker += 1
+        elif i[15] == "Saturday":
+            Saturday_tracker += 1
+        # Checks if type of appointment is lice check or removal
+        if i[12] == "lice_check":
+            lice_check_revenue = lice_check_revenue + i[13]
+        else:
+            lice_removal_revenue = lice_removal_revenue + i[13]
+        # Checks for rating and adds it
+        if i[9] != None:
+            rating_amount += 1
+            total_rating = total_rating + i[9]
+    
+    appointment_cancellation_rate = missed_appointment / total_booking;
+    satisfaction_average = rating_amount / total_rating;
+    popular_time_slot = max();
+    if popular_time_slot == time_slot:
+        print(time_slot) # Left here to be tested
+
+    less_time_slot = min();
+    if less_time_slot == time_slot:
+        print(time_slot) # Left here to be tested
+
+    popular_day = max(Sunday_tracker, Monday_tracker, Tuesday_tracker, Wednesday_tracker, Thursday_tracker, Friday_tracker, Saturday_tracker);
+    if popular_day == days:
+        print(days) # Left here to be tested
+    
+    less_popular_day = min(Sunday_tracker, Monday_tracker, Tuesday_tracker, Wednesday_tracker, Thursday_tracker, Friday_tracker, Saturday_tracker);
+    if less_popular_day == days:
+        print(days) # Left here to be tested
     return render_template('analytics_dashboard.html')
