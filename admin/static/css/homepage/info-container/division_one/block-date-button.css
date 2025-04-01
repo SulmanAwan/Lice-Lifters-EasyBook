@@ -1,6 +1,6 @@
 .block-date-button{
     display: flex;
-    border: 5px solid black;
+    
     width: 20%;
 }
 
@@ -27,4 +27,11 @@
     font-weight: 600;
     line-height: normal;
     text-decoration: none;
+    cursor: pointer;
+}
+
+.block-button:hover {
+    background: rgb(229, 11, 14);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }

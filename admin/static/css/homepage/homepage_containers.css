@@ -1,9 +1,9 @@
 /* ENTIRE HOMEPAGE CONTAINER*/
 .homepage-container{
     display:flex;
-    margin-bottom: 2vh;
+    margin-bottom: 80px;
     height: auto;
-    border: 5px solid black;
+    
     gap: 3vh;
 }
 
@@ -16,16 +16,15 @@
 .calendar-button-container{
     display: flex;
     flex-direction: column;
-    border: 5px solid black;
-    width: 80vh;
+    width: 70vh;
     height: auto;
-    margin-left: 10vh;
-    
+    margin-left: 12vh;
+    margin-right: 120px;
 }
 
 /* This is the container with the admin buttons */
 .admin-buttons-container {
-    border: 5px solid black;
+    
     width: 100%; 
     height: auto;
     flex-wrap: wrap;
@@ -39,7 +38,6 @@
 
 /* This is the container with the calendar */
 .admin-calendar-container {
-    border: 5px solid purple;
     width: 100%; 
     height: auto;
     display: flex;
@@ -53,7 +51,6 @@
 /* This container holds the date_label, shift_label, shift_info, bookings_label, booking_info containers*/
 .info-container{
     display: flex;
-    border: 5px solid black;
     width: 80vh;
     height: auto;
     flex-direction: column;
@@ -61,15 +58,14 @@
 
 .date-label-container{
     display: flex;
-    border: 5px solid black;
     width: 100%;
     height: 5vh;
     margin-top: 3vh;
 }
 
 .shift-label-container{
+
     display: flex;
-    border: 5px solid black;
     width: 100%;
     height: 5vh;
     margin-top: 3vh;
@@ -77,18 +73,17 @@
 
 .shift-employees-container{
     display: flex;
-    border: 5px solid black;
     width: 100%;
     min-height: 20vh;
     flex-direction: column;
     height: auto;
-    margin-top: 3vh;
+    margin-top: 13px;
     flex-wrap: wrap;
 }
 
 .bookings-label-container{
     display: flex;
-    border: 5px solid black;
+    
     width: 100%;
     height: 5vh;
     margin-top: 3vh;
@@ -96,14 +91,40 @@
 
 .bookings-container{
     display: flex;
-    border: 5px solid black;
+    
     width: 100%;
     min-height: 34vh;
     height: auto;
-    margin-top: 3vh;
+    margin-top: 13px;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 5vh;
+
 }
 
-/* NOTE: REMEMBER MAKE THE FLEXBOXES WITH DYNAMIC CONTENT HAVE AUTO HEIGHT*/
+.no-shifts{
+    
+    font-family: "Delval Galanogrotesque", sans-serif;
+    background-color: #c0c0c0;
+    border-radius: 10px;
+    padding: 20px;
+    
+    color: black;
+    font-size: 18px;
+    
+}
+
+.no-bookings{
+    font-size: 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    background-color: #c0c0c0;
+    border-radius: 10px;
+    padding: 20px;
+    
+    color: black;
+    font-size: 18px;
+    height: 5%;
+    width: 100%;
+
+    
+}

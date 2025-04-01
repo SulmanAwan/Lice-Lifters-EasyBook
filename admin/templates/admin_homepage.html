@@ -53,7 +53,7 @@
                 <a href="{{ url_for('admin.manage_bookings') }}" class="admin-button">
                     Manage Bookings
                 </a>
-                <a href="{{ url_for('admin.admin_homepage') }}" class="admin-button">
+                <a href="{{ url_for('admin.manage_timeslots', selected_date=selected_date) }}" class="admin-button">
                     Manage Timeslots
                 </a>
             </div>
@@ -92,12 +92,18 @@
             
             <!--Division three TODO LATER-->
             <div class="shift-employees-container">
-                {% for shift in shifts %}
-                <div class="shifts">
-                    <div class="employee">Employee: {{ shift['employee_name'] }} </div>
-                    <div class="times">Shift: {{ shift['start_time'] }} - {{ shift['end_time'] }} </div>
-                </div>
-                {% endfor %}
+                {% if shifts %}
+                    {% for shift in shifts %}
+                    <div class="shifts">
+                        <div class="employee">Employee: {{ shift['employee_name'] }} </div>
+                        <div class="times">Shift: {{ shift['start_time'] }} - {{ shift['end_time'] }} </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-shifts">
+                        No shifts assigned for this date.
+                    </div>
+                {% endif %}
             </div>
 
             <!--Division four-->
@@ -110,14 +116,20 @@
 
             <!--Division five TODO LATER-->
             <div class="bookings-container">
-                {% for book in bookings %}
-                <div class="bookings">
-                    Time: {{ book['start_time'] }} - {{ book['end_time'] }} <br>
-                    Name: {{ book['customer_name'] }} <br>
-                    Payment method: {{ book['payment_method'] }} <br>
-                    Type: {{ book['service_type'] }}
-                </div>
-                {% endfor %}
+                {% if bookings %}
+                    {% for book in bookings %}
+                    <div class="bookings">
+                        Time: {{ book['start_time'] }} - {{ book['end_time'] }} <br>
+                        Name: {{ book['customer_name'] }} <br>
+                        Payment method: {{ book['payment_method'] }} <br>
+                        Type: {{ book['service_type'] }}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-bookings">
+                        No bookings for this date.
+                    </div>
+                {% endif %}
             </div>
         </div>
 

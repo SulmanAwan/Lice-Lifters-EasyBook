@@ -285,3 +285,15 @@
     transform: translateY(-3px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
+
+.no-shifts-message{
+    font-size: 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    color: #555;
+    font-size: 16px;
+    margin-top: 20px;
+}

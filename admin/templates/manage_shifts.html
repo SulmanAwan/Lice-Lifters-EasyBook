@@ -74,6 +74,12 @@
             </form>
         </div>
         {% endfor %}
+
+        {% else %}
+            <div class="no-shifts-message">
+                No shifts for this date. Assign a shift by filling in the form below.
+            </div>
+
     {% endif %}
 
     <hr id="divider">

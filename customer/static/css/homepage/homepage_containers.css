@@ -126,6 +126,12 @@
 }
 
 #next:hover {
+    background: #2993FE;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+#next:hover {
     cursor: pointer;
 }
 
@@ -189,5 +195,6 @@
 .no-slots-message{
     font-size: 20px;
     color: #2993FE;
+    font-family: "Delval Galanogrotesque", sans-serif;
     margin-top: 5px;
 }

@@ -2,30 +2,33 @@
     display: flex;
     justify-content: center;
     align-content: center;
+    
 }
 
 .calendar-weekdays{
     display: flex;
     flex-direction: row;
-    border: 5px solid red;
-    justify-content: space-around;
     
+    justify-content: space-between;
+    text-decoration: underline;
+    width: 100%;
 }
 
 .calendar-weekdays h1{
     font-family: "Delval Galanogrotesque", sans-serif;
     font-size: 18px;
-    font-style: normal;
+    min-width: 35px;
+    text-align: center;
     margin: 0px;
-    padding: 10px;
-    font-weight: 600;
-    border: 1px solid black;
+    padding: 20px;
+    
+    
 }
 
 .calendar-days{
+    
     display: flex;
     flex-direction: column;
-    border: 1px solid black;
     width: 100%;
     min-height: 36vh;
     height: auto;
@@ -34,10 +37,11 @@
 .week{
     display: flex;
     height: 6vh;
-    border: 1px solid red;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
+    width: 100%;
     margin: 6.5px;
+    margin-left: 0;
 }
 
 .week a{

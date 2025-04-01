@@ -1,0 +1,174 @@
+.timeslots-container {
+    max-width: 800px;
+    margin: 30px auto 50px;
+    padding: 0 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+}
+
+.timeslots-header {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    margin-bottom: 40px;
+    width: 60vh;
+}
+
+.timeslots-header hr {
+    border: none;
+    background-color: black;
+    margin: 0;
+    width: 50vh;
+    border: 2px solid black;
+}
+
+.title-action-container{
+    display: flex;
+}
+
+.actions{
+    display: flex;
+    width: 25%;
+    margin-right: 10vh;
+    margin-top: 2vh;
+    margin-left: 5vh;
+    gap: 4vh;
+    justify-content: right;
+}
+
+.timeslots-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.timeslots-header h2 {
+    margin: 5px 0 20px;
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 30px;
+    background-color: #E50B0E;
+    height: 20px;
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+    height: 30px;
+    width: 8vh;
+    font-size: 18px;
+    font-weight: 600;
+    border: 1px solid rgba(244, 0, 0, 0.8);
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background-color: #ff0000;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.generate-timeslots {
+    background-color: #b8ffbc;
+    border: 2px solid #4CAF50;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.generate-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 240px;
+    height: 46px;
+}
+
+.generate-btn:hover {
+    background-color: #4CAF50;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.info-text {
+    color: black;
+    font-size: 16px;
+    margin-top: 15px;
+    line-height: 25px;
+}
+
+.timeslots-list {
+    margin-top: 20px;
+}
+
+.section-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 3px solid black;
+    padding-bottom: 10px;
+}
+
+.timeslot-entry {
+    background-color: #E8F4FF;
+    border: 2px solid #2993FE;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timeslot-info {
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+}
+
+.timeslot-info h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.delete-btn {
+    background-color: #E50B0E;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 40px;
+}
+
+.delete-btn:hover {
+    background-color: #ff0000;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.no-timeslots {
+    font-size: 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    color: #555;
+    font-size: 16px;
+    margin-top: 20px;
+}

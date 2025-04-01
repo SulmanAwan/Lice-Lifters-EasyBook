@@ -1324,3 +1324,181 @@ def delete_booking(booking_id):
 def analytics_dashboard():
     # TODO: implement dashboard
     return render_template('analytics_dashboard.html')
+
+@admin.route('/manage_timeslots/<selected_date>', methods=['GET'])
+def manage_timeslots(selected_date):
+    # Convert string date to date object (make it date object for query)
+    slot_date = datetime.datetime.strptime(selected_date, '%Y-%m-%d').date()
+    
+    # Format date for display in page
+    display_date = slot_date.strftime('%A, %B %d')
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get all timeslots for the selected date
+        cursor.execute("""
+            SELECT slot_id, start_time, end_time, max_bookings, current_bookings
+            FROM time_slots
+            WHERE slot_date = %s
+            ORDER BY start_time
+        """, (slot_date,))
+        
+        timeslots = cursor.fetchall()
+        
+        for slot in timeslots:
+            # Format times for display into 12hr format
+            slot['formatted_start_time'] = format_time(slot['start_time'])
+            slot['formatted_end_time'] = format_time(slot['end_time'])
+            
+            # Calculate availability for each slot
+            slot['availability'] = slot['max_bookings'] - slot['current_bookings']
+            
+            # Segment the time and period for the formatted times so we can display them
+            start_components = slot['formatted_start_time'].split(' ')
+            end_components = slot['formatted_end_time'].split(' ')
+            
+            slot['start_time_display'] = start_components[0]
+            slot['start_period'] = start_components[1]
+            
+            slot['end_time_display'] = end_components[0]
+            slot['end_period'] = end_components[1]
+            
+    except Exception as e:
+        # When error occurs, return empty timeslots list and indicate error to user
+        flash(f'Error fetching timeslots: {str(e)}', 'error')
+        timeslots = []
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Render page with the selected date, display date, and the list of all the timeslots for the selected date
+    return render_template('manage_timeslots.html',
+                          selected_date=selected_date,
+                          display_date=display_date,
+                          timeslots=timeslots)
+
+@admin.route('/delete_timeslot/<int:slot_id>/<selected_date>', methods=['POST'])
+def delete_timeslot(slot_id, selected_date):
+
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Check if the timeslot has any bookings (we don't want to delete timeslots with bookings)
+        cursor.execute("SELECT current_bookings FROM time_slots WHERE slot_id = %s", (slot_id,))
+        result = cursor.fetchone()
+        
+        # If there are currently bookings for the selected timeslot, then we indicate to admin that this timeslot
+        # Cant be deleted
+        if result and result['current_bookings'] > 0:
+            flash('Cannot delete a timeslot that has bookings', 'error')
+        else:
+            # Otherwise if there are no bookings for this timeslot, we just delete the timeslot, commit the change, and indicate the admin it was successful
+            cursor.execute("DELETE FROM time_slots WHERE slot_id = %s", (slot_id,))
+            conn.commit()
+            flash('Timeslot deleted successfully', 'success')
+    
+    except Exception as e:
+        # In cash of error when deleting timeslot, flash error
+        flash(f'Error deleting timeslot: {str(e)}', 'error')
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Return the selected_date back to the page so it can be rendered and utilized in the other routes
+    return redirect(url_for('admin.manage_timeslots', selected_date=selected_date))
+
+@admin.route('/generate_default_timeslots/<selected_date>', methods=['POST'])
+def generate_default_timeslots(selected_date):
+
+    # Convert string date to date object (make it date object for query)
+    slot_date = datetime.datetime.strptime(selected_date, '%Y-%m-%d').date()
+    
+    # use the .weekday() method for date object to determine if its a weekend or weekday
+    # This method returns a 5-6 for weekends and 0-4 for weekdays
+    weekday = slot_date.weekday()  
+    
+    if weekday < 5:  # Weekday
+        # Set start hour to 9am and end hour to 5pm
+        start_hour = 9  # 9AM
+        end_hour = 17   # 5PM
+    else:  # Weekend
+        # Set start hour to 10am and end hour to 4pm
+        start_hour = 10  # 10AM
+        end_hour = 16   # 4PM
+
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        
+        # Create a datetime object by combining the slot_date and the start/end hour so we can increment the 
+        # Minutes during each iteration of the while loop
+        current_time = datetime.datetime.combine(slot_date, datetime.time(start_hour, 0))
+        end_time = datetime.datetime.combine(slot_date, datetime.time(end_hour, 0))
+        
+        # Keep track of slots added and skipped (We will skip slots that already exist)
+        slots_added = 0
+        slots_skipped = 0
+        
+        # Generate 30-minute slots until end_time
+        while current_time < end_time:
+            # Format time to conform to database TIME format
+            start_time_str = current_time.strftime("%H:%M:%S")
+            
+            # Calculate end time (30 minutes later)
+            slot_end_time = current_time + datetime.timedelta(minutes=30)
+            # Format time to conform to database TIME format
+            end_time_str = slot_end_time.strftime("%H:%M:%S")
+            
+            # Check if this timeslot already exists
+            cursor.execute("""
+                SELECT COUNT(*) as count 
+                FROM time_slots 
+                WHERE slot_date = %s AND start_time = %s
+            """, (slot_date, start_time_str))
+            
+            result = cursor.fetchone()
+            
+            # If the timeslot doesn't already exist in databse, we create it and increment slot_addded
+            if result['count'] == 0:
+                cursor.execute("""
+                    INSERT INTO time_slots (slot_date, start_time, end_time, max_bookings, current_bookings)
+                    VALUES (%s, %s, %s, %s, 0)
+                """, (slot_date, start_time_str, end_time_str, 2))
+                slots_added += 1
+            else:
+                # Otherwise, if it exists, we skip adding it and increment slots_skipped
+                slots_skipped += 1
+            
+            # We move to the next 30-minute slot and repeat the process of checking if it needs to be added or not
+            current_time = slot_end_time
+        
+        # We commit the change (if slot was added)
+        conn.commit()
+        
+        # If a slot was added, we indicate this information to the user and display how many slots where added and how
+        # many slots where skipped for the selected_date
+        if slots_added > 0:
+            flash(f'Successfully generated {slots_added} timeslots. Skipped {slots_skipped} existing timeslots.', 'success')
+        else:
+            # Otherwise, if no slot was added, we tell the admin of how many slots were skipped
+            flash(f'No new timeslots added. {slots_skipped} timeslots already exist.', 'info')
+    
+    except Exception as e:
+        # In case of error, we flash error msg to user
+        flash(f'Error generating timeslots: {str(e)}', 'error')
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # We render the page again with the selected_date
+    return redirect(url_for('admin.manage_timeslots', selected_date=selected_date))

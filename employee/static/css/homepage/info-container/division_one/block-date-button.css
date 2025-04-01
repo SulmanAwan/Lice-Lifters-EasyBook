@@ -4,7 +4,7 @@
     width: 20%;
 }
 
-.block-button{
+.shift-change-button{
     display: flex;
     align-items: center;
     justify-content: center;
@@ -23,7 +23,13 @@
     font-family: "Delval Galanogrotesque", sans-serif;
     font-size: 20px;
     font-style: normal;
-    font-weight: 600;
+    font-weight: 500;
     line-height: normal;
     text-decoration: none;
+}
+
+.shift-change-button:hover {
+    background: #2993FE;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }

@@ -94,6 +94,7 @@
 .filter-group.search {
     flex-grow: 1;
     min-width: 200px;
+    
 }
 
 .filter-group label {
@@ -127,6 +128,7 @@
     font-weight: 800;
     line-height: normal;
     cursor: pointer;
+    
 }
 
 .filter-group button:hover{
@@ -152,4 +154,52 @@
 .search-input {
     height: 17px;
     width: 220px;
+}
+
+.no-bookings{
+    font-size: 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    padding: 20px;
+    width: 1980px;
+    text-align: center;
+    color: #555;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.reset-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    border: 1px solid #6c757d;
+    background: #6c757d;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    color: white;
+    width: 100%;
+    margin-top: 1vh;
+    
+    height: 40px;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+    text-align: center;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: normal;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.reset-btn:hover {
+    background-color: #5a6268;
+    transform: translateY(-5px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }

@@ -50,7 +50,7 @@
                     </h1>
                 </div>
                 <div class="block-date-button">
-                    <a href="{{ url_for('employee.shift_change', display_date=display_date, current_year=current_year, shift_id=shift.shift_id if shift else 'none') }}" class="block-button">
+                    <a href="{{ url_for('employee.shift_change', display_date=display_date, current_year=current_year, shift_id=shift.shift_id if shift else 'none') }}" class="shift-change-button">
                         Request Shift <br> Change
                     </a>
                 </div>
@@ -76,8 +76,8 @@
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div style="font-size: 20px; font-family: 'Delval Galanogrotesque', sans-serif;">
-                        No bookings available
+                    <div class="no-bookings">
+                        No bookings for this date
                     </div>
                 {% endif %}
             </div>
