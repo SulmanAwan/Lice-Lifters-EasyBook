@@ -281,17 +281,127 @@ def get_available_timeslots_for_date(date):
     # Return the list of open timeslots for the selected date so it can be rendered in the page
     return timeslots
 
-@customer.route('/manage_appointments', methods=['GET', 'POST'])
-def manage_appointments():
-    return render_template('manage_appointments.html') 
-
 @customer.route('/book_appointment', methods=['GET','POST'])
 def book_appointment():
-    selected_date = request.form['selected_date']
+    # Get the date string from the form
+    date_str = request.form['selected_date']
+    # We want to change its format, so lets convert it into a date object with the datetime module and datetime class (datetime.datetime)
+    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+    # We format the new date obj into a string with the format like "Month, Day Year"
+    display_date = date_obj.strftime('%B %d, %Y')
     slot_id = request.form['slot_id']
-    user_id = session.get('user_id')
+    user_id = session.get('user_id')    
 
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Get the selected timeslot so we can display its start and end time
+    cursor.execute("""
+                   SELECT start_time, end_time
+                   FROM time_slots
+                   WHERE slot_id = %s
+                   """, (slot_id,))
+    
+    selected_slot = cursor.fetchone()
+
+    # Format the time into 12-hour format
+    selected_slot['formatted_start_time'] = format_time(selected_slot['start_time'])
+    selected_slot['formatted_end_time'] = format_time(selected_slot['end_time'])
+
+    # Render the form with the required data for the customer
     return render_template('book_appointment.html', 
-                           selected_date=selected_date,
-                           slot_id=slot_id,
-                           user_id=user_id)
+                        display_date=display_date,
+                        slot_id=slot_id,
+                        user_id=user_id,
+                        selected_slot=selected_slot)
+
+@customer.route('/schedule_appointment/<int:slot_id>', methods=['POST'])
+def schedule_appointment(slot_id):
+    appointment_type = request.form['appointment_type']
+    payment_method = request.form['payment_method']
+    user_id = session.get('user_id')   
+
+    # For online payments we will require card details so proceed users who want to pay via stripe to
+    # Another route 
+    if payment_method == "stripe":
+        return redirect(url_for('customer.online_payment', 
+                         appointment_type=appointment_type, 
+                         slot_id=slot_id, 
+                         payment_method=payment_method,
+                         user_id=user_id))
+
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get service type_id and price for the appointment_type specified by user
+        cursor.execute("""
+            SELECT type_id, price
+            FROM booking_types 
+            WHERE type_name = %s
+        """, (appointment_type,))
+        service_type = cursor.fetchone()
+
+        # Create payment transaction record using the payment_method and service_type price
+        # Set stripe_transaction_id to null for in-store bookings
+        cursor.execute("""
+            INSERT INTO payment_transactions 
+            (payment_method, amount, stripe_transaction_id) 
+            VALUES (%s, %s, NULL)
+        """, (payment_method, service_type['price']))
+        
+        # Get the transaction ID of the newly inserted record (ie: the last row)
+        transaction_id = cursor.lastrowid
+
+        # Insert booking record with the newly created transaction_id and assign it the
+        # type_id, slot_id, and user_id it corresponds to
+        cursor.execute("""
+            INSERT INTO bookings 
+            (customer_id, type_id, transaction_id, slot_id, appointment_status) 
+            VALUES (%s, %s, %s, %s, 'current')
+        """, (user_id, service_type['type_id'], transaction_id, slot_id))
+
+        # Increment current bookings for the time slot (since new booking has been made)
+        cursor.execute("""
+            UPDATE time_slots 
+            SET current_bookings = current_bookings + 1 
+            WHERE slot_id = %s
+        """, (slot_id,))
+        
+        # Commit the changes and alert user that they have successfuly booked the appointment
+        conn.commit()
+        flash('Appointment booked successfully!', 'success')
+        
+        # Redirect to manage appointments or homepage
+        return redirect(url_for('customer.manage_appointments'))
+    
+    except Exception as e:
+        # In the case of error, return the customer to the homepage and display a error msg
+        flash(f'Error booking appointment: {str(e)}', 'error')
+        return redirect(url_for('customer.customer_homepage'))
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+@customer.route('/online_payment', methods=['GET', 'POST'])
+def online_payment():
+    appointment_type = request.args.get('appointment_type')
+    slot_id = request.args.get('slot_id')
+    payment_method = request.args.get('payment_method')
+    user_id = request.args.get('user_id')
+
+    # TODO: Implement Stripe Online Payment System here to process online payments
+
+    return render_template('online_payment.html', 
+                    appointment_type=appointment_type,
+                    slot_id=slot_id,
+                    payment_method=payment_method,
+                    user_id=user_id)
+
+@customer.route('/manage_appointments', methods=['GET', 'POST'])
+def manage_appointments():
+
+    return render_template('manage_appointments.html') 

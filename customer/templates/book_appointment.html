@@ -3,11 +3,47 @@
 {% block title %}Book Appointment{% endblock %}
 
 {% block extra_css %} 
-
+<link rel="stylesheet" type="text/css" href="{{ url_for('customer.static', filename='css/book_appointment/book_appointment.css') }}">
 {% endblock %}
 
 {% block content %}
-    {{slot_id}}
-    {{selected_date}}
-    {{user_id}}
+<div class="create-container">
+    <div class="create-box">
+        <h1 class="create-title">Book Appointment</h1>
+        <h2 class="create-subtitle">{{ display_date }} <br>{{selected_slot['formatted_start_time']}} - {{selected_slot['formatted_end_time']}}</h2>
+
+        <form method="POST" action="{{ url_for('customer.schedule_appointment', slot_id=slot_id) }}">
+            <div class="form-group">
+                <label for="appointment-type" id="prompt">Select Appointment: </label>
+                
+                <div class="radio-group">
+                    <input type="radio" id="lice_check" name="appointment_type" value="Lice Check" required>
+                    <label for="lice_check" class="radio-label">Head Lice Check - $40</label>
+                </div>
+                
+                <div class="radio-group">
+                    <input type="radio" id="lice_removal" name="appointment_type" value="Lice Removal" required>
+                    <label for="lice_removal" class="radio-label">Head Lice Removal - $189</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="payment-type" id="prompt">Select Payment: </label>
+                
+                <div class="radio-group">
+                    <input type="radio" id="in-store" name="payment_method" value="in_store" required>
+                    <label for="in-store" class="radio-label">In-store</label>
+                </div>
+                
+                <div class="radio-group">
+                    <input type="radio" id="online" name="payment_method" value="stripe" required>
+                    <label for="online" class="radio-label">Online (with Stripe)</label>
+                </div>
+            </div>
+
+            <button type="submit" class="create-btn">Submit</button>
+            <a href="{{ url_for('customer.customer_homepage') }}" class="back">Back to Homepage</a>
+        </form>
+    </div>
+</div>
 {% endblock %}
