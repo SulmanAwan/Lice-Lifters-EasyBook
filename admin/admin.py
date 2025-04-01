@@ -1072,7 +1072,7 @@ def analytics_dashboard():
     }
 
     time_slot = {
-
+        
     }
 
     conn = get_db_connection()
@@ -1107,7 +1107,7 @@ def analytics_dashboard():
         # Note to delete, ask what possible values can be in database to ensure correctness
         # Note, have to use column index to get column value in the row being i, starts at 0 being the first
         # Checks if appointment was answered or missed
-        if i[5] == "Missed":
+        if i[5] == "Cancelled":
             missed_appointment += 1
         # Tracks appointment associated with each day
         if i[15] == "Sunday":
@@ -1151,4 +1151,4 @@ def analytics_dashboard():
     less_popular_day = min(Sunday_tracker, Monday_tracker, Tuesday_tracker, Wednesday_tracker, Thursday_tracker, Friday_tracker, Saturday_tracker);
     if less_popular_day == days:
         print(days) # Left here to be tested
-    return render_template('analytics_dashboard.html')
+    return render_template('analytics_dashboard.html', total_booking=total_booking)
