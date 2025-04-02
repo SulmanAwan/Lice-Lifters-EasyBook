@@ -1301,8 +1301,22 @@ def delete_booking(booking_id):
 
 @admin.route('/analytics_dashboard', methods=['GET'])
 def analytics_dashboard():
-    # TODO: implement dashboard
-    return render_template('analytics_dashboard.html')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        cursor.execute("SELECT COUNT(*) AS total FROM bookings")
+        result = cursor.fetchone()
+        total_bookings = result['total']
+    except Exception as e:
+        flash(f'Error fetching booking analytics: {str(e)}', 'error')
+        total_bookings = 0
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('analytics_dashboard.html', total_bookings=total_bookings)
+
 
 @admin.route('/manage_timeslots/<selected_date>', methods=['GET'])
 def manage_timeslots(selected_date):

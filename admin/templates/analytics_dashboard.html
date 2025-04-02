@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Accounts{% endblock %}
+
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/analytics_dashboard/dashboard.css') }}">
+{% endblock %}
+
+
+{% block content %}
+    <h1analytics>Analytics Dashboard</h1analytics>
+
+    <div class="actions">
+        <a href="{{ url_for('admin.admin_homepage', selected_date=selected_date) }}" class="back-btn">Back</a>
+    </div>
+
+    <div class="dashline"> </div>
+    <div class="analytics"> 
+        <div> <span class="bold">Appointment cancellation rate:</span> Test text </div>
+            <div class="additionalspace"></div>
+        <div> <span class="bold">Most popular time slot:</span> () </div>
+        <div> <span class="bold">Less popular time slot:</span> () </div>
+            <div class="additionalspace"></div>
+        <div> <span class="bold">Most popular day:</span> () </div>
+        <div> <span class="bold">Less popular day:</span> () </div>
+            <div class="additionalspace"></div>
+        <div> <span class="bold">Revenue from lice check:</span> () </div>
+        <div> <span class="bold">Revenue from lice removal:</span> () </div>
+            <div class="additionalspace"></div>
+        <div> <span class="bold">Satisfaction score(out of five):</span> () </div>
+        <div> <span class="bold">Total booking:</span> {{ total_bookings }} </div>
+    </div>
+{% endblock %}
