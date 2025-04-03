@@ -1308,14 +1308,20 @@ def analytics_dashboard():
         cursor.execute("SELECT COUNT(*) AS total FROM bookings")
         result = cursor.fetchone()
         total_bookings = result['total']
+        cursor.execute("SELECT AVG(rating) as avg_rating FROM reviews WHERE rating IS NOT NULL")
+        result = cursor.fetchone()
+        avg_rating = round(result['avg_rating'], 2) if result['avg_rating'] else "No ratings yet"
+
     except Exception as e:
-        flash(f'Error fetching booking analytics: {str(e)}', 'error')
+        flash(f'Error fetching analytics: {str(e)}', 'error')
         total_bookings = 0
+        avg_rating = "Error"
     finally:
         cursor.close()
         conn.close()
 
-    return render_template('analytics_dashboard.html', total_bookings=total_bookings)
+    return render_template('analytics_dashboard.html', total_bookings=total_bookings, avg_rating=avg_rating,
+                           )
 
 
 @admin.route('/manage_timeslots/<selected_date>', methods=['GET'])
