@@ -1303,25 +1303,54 @@ def delete_booking(booking_id):
 def analytics_dashboard():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
-        cursor.execute("SELECT COUNT(*) AS total FROM bookings")
-        result = cursor.fetchone()
-        total_bookings = result['total']
-        cursor.execute("SELECT AVG(rating) as avg_rating FROM reviews WHERE rating IS NOT NULL")
+        # Total bookings
+        cursor.execute("SELECT COUNT(*) AS total FROM bookings WHERE appointment_status != 'cancel'")
+        total_bookings = cursor.fetchone()['total']
+
+        # Average satisfaction score
+        cursor.execute("SELECT AVG(rating) AS avg_rating FROM reviews WHERE rating IS NOT NULL")
         result = cursor.fetchone()
         avg_rating = round(result['avg_rating'], 2) if result['avg_rating'] else "No ratings yet"
+
+        # Revenue from Head Check
+        cursor.execute("""
+            SELECT SUM(pt.amount) AS total_revenue
+            FROM bookings b
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE bt.type_name = 'head check'
+        """)
+        head_check_revenue = cursor.fetchone()['total_revenue'] or 0
+
+        # Revenue from Lice Removal
+        cursor.execute("""
+            SELECT SUM(pt.amount) AS total_revenue
+            FROM bookings b
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE bt.type_name = 'lice removal'
+        """)
+        lice_removal_revenue = cursor.fetchone()['total_revenue'] or 0
 
     except Exception as e:
         flash(f'Error fetching analytics: {str(e)}', 'error')
         total_bookings = 0
         avg_rating = "Error"
+        head_check_revenue = 0
+        lice_removal_revenue = 0
+
     finally:
         cursor.close()
         conn.close()
 
-    return render_template('analytics_dashboard.html', total_bookings=total_bookings, avg_rating=avg_rating,
-                           )
+    return render_template('analytics_dashboard.html',
+                           total_bookings=total_bookings,
+                           avg_rating=avg_rating,
+                           head_check_revenue=head_check_revenue,
+                           lice_removal_revenue=lice_removal_revenue)
+
 
 
 @admin.route('/manage_timeslots/<selected_date>', methods=['GET'])
