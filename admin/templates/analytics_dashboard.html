@@ -16,19 +16,19 @@
 
     <div class="dashline"> </div>
     <div class="analytics"> 
-        <div> <span class="bold">Appointment cancellation rate:</span> Test text </div>
+        <div> <span class="bold">Appointment cancellation rate:</span> {{ appointment_cancellation_rate }}% </div>
             <div class="additionalspace"></div>
-        <div> <span class="bold">Most popular time slot:</span> () </div>
-        <div> <span class="bold">Less popular time slot:</span> () </div>
+        <div> <span class="bold">Most popular time slot:</span> {{ format_popular_start_time_slot }} - {{ format_popular_end_time_slot }} </div>
+        <div> <span class="bold">Less popular time slot:</span> {{ format_less_popular_start_time_slot }} - {{ format_less_popular_end_time_slot }} </div>
             <div class="additionalspace"></div>
-        <div> <span class="bold">Most popular day:</span> () </div>
-        <div> <span class="bold">Less popular day:</span> () </div>
+        <div> <span class="bold">Most popular day:</span> {{ popular_day }} </div>
+        <div> <span class="bold">Less popular day:</span> {{ unpopular_day }} </div>
             <div class="additionalspace"></div>
         <div> <span class="bold">Revenue from lice check:</span> () </div>
         <div> <span class="bold">Revenue from lice removal:</span> () </div>
             <div class="additionalspace"></div>
         <div> <span class="bold">Satisfaction score(out of five):</span> () </div>
-        <div> <span class="bold">Total booking:</span> () </div>
+        <div> <span class="bold">Total booking:</span> {{ total_amount }} </div>
     </div>
 {% endblock %}
 

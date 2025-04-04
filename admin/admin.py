@@ -1051,104 +1051,102 @@ def update_appointment_statuses():
 @admin.route('/analytics_dashboard', methods=['GET'])
 def analytics_dashboard():
 
-    # TODO: implement dashboard
-
-    # Values defined as 0
-    lice_check_revenue = 0;
-    lice_removal_revenue = 0;
-    total_booking = 0;
-    missed_appointment = 0;
-    rating_amount = 0;
-
-    # Made to have string asscoiated to variables
-    days = {
-    "Sunday": Sunday_tracker,
-    "Monday": Monday_tracker,
-    "Tuesday": Tuesday_tracker,
-    "Wednesday": Wednesday_tracker,
-    "Thursday": Thursday_tracker,
-    "Friday": Friday_tracker,
-    "Saturday": Saturday_tracker
-    }
-
-    time_slot = {
-        
-    }
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Combines tables REVIEWS, BOOKING, BOOKING TYPES, and TIME SLOTS
+     
+        # Query for cancellation amount
     cursor.execute("""
-        SELECT *
+        SELECT COUNT(booking_id)
         FROM bookings
-        LEFT JOIN reviews
-        ON bookings.customer_id = reviews.customer_id
-        LEFT JOIN booking_types
-        ON bookings.type_id = booking_types.type_id
-        LEFT JOIN time_slots
-        ON bookings.slot_id = time_slots.slot_id
-        UNION
-        SELECT *
+        """)
+    total_booking = cursor.fetchall()
+
+        # Query for cancellation amount
+    cursor.execute("""
+        SELECT COUNT(appointment_status)
         FROM bookings
-        RIGHT JOIN reviews
-        ON bookings.customer_id = reviews.customer_id
-        RIGHT JOIN booking_types
-        ON bookings.type_id = booking_types.type_id
-        RIGHT JOIN time_slots
-        ON bookings.slot_id = time_slots.slot_id
-                   """)
+        WHERE appointment_status = "cancel"
+        """)
+    total_cancel = cursor.fetchall()
+    for row in total_cancel:
+        total_cancel_amount = total_cancel[0]["COUNT(appointment_status)"]
+    for row in total_booking:
+        total_amount = total_booking[0]["COUNT(booking_id)"]
+    appointment_cancellation_rate = (total_cancel_amount / total_amount) * 100
 
-    total_records = cursor.fetchall()
+    # Query for popular days
+    cursor.execute("""
+        SELECT slot_date, COUNT(*) AS popular_date
+        FROM time_slots
+        GROUP BY slot_date
+        ORDER BY popular_date DESC
+        LIMIT 1
+        """)
+    unformated_popular_day_date = cursor.fetchall()
+    # Converting date into a single day
+    popular_day_date_index = unformated_popular_day_date[0]["slot_date"]
+    popular_day = popular_day_date_index.strftime("%A")
     
-    for i in total_records:
-        total_booking += 1
+    # Query for less popular days
+    cursor.execute("""
+        SELECT slot_date, COUNT(*) AS less_popular_date
+        FROM time_slots
+        GROUP BY slot_date
+        ORDER BY less_popular_date ASC
+        LIMIT 1
+    """)
+    less_popular_day_date = cursor.fetchall()
+    # Converting date into a single day
+    unpopular_day_date_index = less_popular_day_date[0]["slot_date"]
+    unpopular_day = unpopular_day_date_index.strftime("%A")
 
-        # Note to delete, ask what possible values can be in database to ensure correctness
-        # Note, have to use column index to get column value in the row being i, starts at 0 being the first
-        # Checks if appointment was answered or missed
-        if i[5] == "Cancelled":
-            missed_appointment += 1
-        # Tracks appointment associated with each day
-        if i[15] == "Sunday":
-            Sunday_tracker += 1
-        elif i[15] == "Monday":
-            Monday_tracker += 1
-        elif i[15] == "Tuesday":
-            Tuesday_tracker += 1
-        elif i[15] == "Wednesday":
-            Wednesday_tracker += 1
-        elif i[15] == "Thursday":
-            Thursday_tracker += 1
-        elif i[15] == "Friday":
-            Friday_tracker += 1
-        elif i[15] == "Saturday":
-            Saturday_tracker += 1
-        # Checks if type of appointment is lice check or removal
-        if i[12] == "lice_check":
-            lice_check_revenue = lice_check_revenue + i[13]
-        else:
-            lice_removal_revenue = lice_removal_revenue + i[13]
-        # Checks for rating and adds it
-        if i[9] != None:
-            rating_amount += 1
-            total_rating = total_rating + i[9]
+    # Query for most popular time slot
+    cursor.execute("""
+        SELECT start_time, end_time, COUNT(*) as popular_timing
+        FROM time_slots
+        GROUP BY start_time, end_time
+        ORDER BY popular_timing DESC
+        LIMIT 1
+    """)
+    unformated_popular_time_slot = cursor.fetchall()
+    # Converts database format of time into hours/minutes/AM or PM
+    #(1900,1,1) was used as a base so that the value works as a datetime object. As long as the values aren't 0 then any other examples work
+    popular_start_time_index = unformated_popular_time_slot[0]['start_time']
+    popular_end_time_index = unformated_popular_time_slot[0]['end_time']
+    popular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_start_time_index
+    format_popular_start_time_slot = popular_start_time_datetimeformat.strftime("%I:%M %p")
+    popular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_end_time_index
+    format_popular_end_time_slot = popular_end_time_datetimeformat.strftime("%I:%M %p")
     
-    appointment_cancellation_rate = missed_appointment / total_booking;
-    satisfaction_average = rating_amount / total_rating;
-    popular_time_slot = max();
-    if popular_time_slot == time_slot:
-        print(time_slot) # Left here to be tested
+    # Query for less popular time slot
+    cursor.execute("""
+        SELECT start_time, end_time, COUNT(*) as less_popular_timing
+        FROM time_slots
+        GROUP BY start_time, end_time
+        ORDER BY less_popular_timing ASC
+        LIMIT 1
+    """)
+    unformated_less_popular_time_slot = cursor.fetchall()
+    # Converts database format of time into hours/minutes/AM or PM
+    unpopular_start_time_index = unformated_less_popular_time_slot[0]['start_time']
+    unpopular_end_time_index = unformated_less_popular_time_slot[0]['end_time']
+    unpopular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_start_time_index
+    format_less_popular_start_time_slot = unpopular_start_time_datetimeformat.strftime("%I:%M %p")
+    unpopular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_end_time_index
+    format_less_popular_end_time_slot = unpopular_end_time_datetimeformat.strftime("%I:%M %p")
 
-    less_time_slot = min();
-    if less_time_slot == time_slot:
-        print(time_slot) # Left here to be tested
-
-    popular_day = max(Sunday_tracker, Monday_tracker, Tuesday_tracker, Wednesday_tracker, Thursday_tracker, Friday_tracker, Saturday_tracker);
-    if popular_day == days:
-        print(days) # Left here to be tested
-    
-    less_popular_day = min(Sunday_tracker, Monday_tracker, Tuesday_tracker, Wednesday_tracker, Thursday_tracker, Friday_tracker, Saturday_tracker);
-    if less_popular_day == days:
-        print(days) # Left here to be tested
-    return render_template('analytics_dashboard.html', total_booking=total_booking)
+    cursor.close()
+    conn.close()
+   
+   # Formated this part per line because it was hard to read
+    return render_template('analytics_dashboard.html', 
+                           appointment_cancellation_rate=appointment_cancellation_rate, 
+                           popular_day=popular_day, 
+                           unpopular_day=unpopular_day, 
+                           format_popular_end_time_slot=format_popular_end_time_slot, 
+                           format_popular_start_time_slot=format_popular_start_time_slot, 
+                           format_less_popular_start_time_slot=format_less_popular_start_time_slot,
+                           format_less_popular_end_time_slot=format_less_popular_end_time_slot,
+                           total_amount=total_amount
+                           )
