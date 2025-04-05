@@ -914,7 +914,7 @@ def manage_bookings():
         # We need to join the necessary tables to retrieve this data and include a WHERE clause so we can append additional queries
         # Based on filter settings that may have been changed in a POST request
         query = """
-            SELECT ts.slot_date, ts.start_time, ts.end_time,
+            SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
                    u.name as customer_name, bt.type_name as service_type,
                    pt.payment_method, b.appointment_status,
                    IFNULL(r.rating, 0) as rating,
