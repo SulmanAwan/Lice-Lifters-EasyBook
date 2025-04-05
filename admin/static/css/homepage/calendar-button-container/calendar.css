@@ -1,8 +1,9 @@
 .calendar-header {
     display: flex;
     justify-content: center;
-    align-content: center;
-    
+    align-items: center;
+    text-align: center;
+    font-size: 18px;
 }
 
 .calendar-weekdays{
@@ -14,14 +15,41 @@
     width: 100%;
 }
 
+#sun{
+    transform: translateX(9px);
+}
+
+#mon{
+    transform: translateX(5.5px);
+}
+
+#tue{
+    transform: translateX(3.25px);
+}
+
+#wed{
+    transform: translateX(-1px);
+}
+
+#thu{
+    transform: translateX(-4.5px);
+}
+
+#fri{
+    transform: translateX(-6px);
+}
+
+#sat{
+    transform: translateX(-8px);
+}
+
 .calendar-weekdays h1{
     font-family: "Delval Galanogrotesque", sans-serif;
     font-size: 18px;
     min-width: 35px;
     text-align: center;
     margin: 0px;
-    padding: 20px;
-    
+    padding: 10px;
     
 }
 
@@ -36,7 +64,7 @@
 
 .week{
     display: flex;
-    height: 6vh;
+    height: 7vh;
     justify-content: space-between;
     align-items: center;
     width: 100%;
@@ -85,7 +113,7 @@
 
 
 #empty{
-    background: white;
+    background: #ebebeb;
     pointer-events: none;
     cursor: default;
 }

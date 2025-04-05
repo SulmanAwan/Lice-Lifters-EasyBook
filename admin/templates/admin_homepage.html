@@ -77,59 +77,67 @@
             </div>    
             
             <!--Division two-->
-            <div class="shift-label-container">
-                <div class="shift-header">
-                    <h1>Shifts</h1>
-                    <hr>
+            <div class="shift-bookings-container">
+                <div class="shift-label-container">
+                    <div class="shift-header">
+                        <h1>Shifts</h1>
+                        <hr>
+                    </div>
+                    
+                    <div class="manage-shift-button">
+                        <a href="{{ url_for('admin.manage_shift', selected_date=selected_date) }}" class="shift-button">
+                            Manage Shift
+                        </a>
+                    </div>
                 </div>
                 
-                <div class="manage-shift-button">
-                    <a href="{{ url_for('admin.manage_shift', selected_date=selected_date) }}" class="shift-button">
-                        Manage Shift
-                    </a>
+                <!--Division three TODO LATER-->
+                <div class="shift-employees-container">
+                    {% if shifts %}
+                        {% for shift in shifts %}
+                        <div class="shifts">
+                            <div class="employee">{{ shift['employee_name'] }} </div>
+                            <div class="times">{{ shift['start_time'] }} - {{ shift['end_time'] }} </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-shifts">
+                            No shifts assigned for this date.
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            
-            <!--Division three TODO LATER-->
-            <div class="shift-employees-container">
-                {% if shifts %}
-                    {% for shift in shifts %}
-                    <div class="shifts">
-                        <div class="employee">Employee: {{ shift['employee_name'] }} </div>
-                        <div class="times">Shift: {{ shift['start_time'] }} - {{ shift['end_time'] }} </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="no-shifts">
-                        No shifts assigned for this date.
-                    </div>
-                {% endif %}
-            </div>
-
             <!--Division four-->
-            <div class="bookings-label-container">
-                <div class="shift-header">
-                    <h1>Bookings</h1>
-                    <hr>
+            <div class="bookings-header-container">
+                <div class="bookings-label-container">
+                    <div class="bookings-header">
+                        <h1>Bookings <span class="booking-count">{% if bookings %}({{ bookings|length }}){% endif %}</span></h1>
+                        <hr>
+                    </div>
                 </div>
-            </div>
 
-            <!--Division five TODO LATER-->
-            <div class="bookings-container">
-                {% if bookings %}
-                    {% for book in bookings %}
-                    <div class="bookings">
-                        Time: {{ book['start_time'] }} - {{ book['end_time'] }} <br>
-                        Name: {{ book['customer_name'] }} <br>
-                        Payment method: {{ book['payment_method'] }} <br>
-                        Type: {{ book['service_type'] }}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="no-bookings">
-                        No bookings for this date.
-                    </div>
-                {% endif %}
+                <!--Division five-->
+                <div class="bookings-container">
+                    {% if bookings %}
+                        {% for book in bookings %}
+                        <div class="bookings">
+                            <div class="booking-left">
+                                <div class="booking-time">{{ book['start_time'] }} - {{ book['end_time'] }}</div>
+                                <div class="booking-type">{{ book['service_type'] }}</div>
+
+                            </div>
+                            <div class="booking-right">
+                                <div class="booking-name">{{ book['customer_name'] }}</div>
+                                <div class="booking-payment">{{ book['payment_method'] }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-bookings">
+                            No bookings for this date.
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 

@@ -8,7 +8,7 @@
 
 .shift-header h1{
     margin: 0;
-    border: 5px solid black;
+    text-align: left;
 }
 
 .shift-header hr {
@@ -16,6 +16,6 @@
     height: 20px;
     background-color: black;
     margin: 8px 0 20px 0; 
-    width: 52vh;
+    width: 75vh;
     border: 2px solid black;
 }

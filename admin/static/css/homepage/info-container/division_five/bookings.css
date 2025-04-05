@@ -1,4 +1,4 @@
-.bookings{
+.bookings {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -7,12 +7,44 @@
     background: #94C9FF;
     border: 3px solid #2993FE;
     border-radius: 20px;
-
     color: #FFF;
-    font-size: 20px;
+    font-size: 18px;
     font-style: normal;
     line-height: normal;
     font-family: "Delval Galanogrotesque", sans-serif;
     font-weight: 500;
-    height: 10vh;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.booking-left, .booking-right {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.booking-left {
+    align-items: flex-start; 
+}
+
+.booking-right {
+    align-items: flex-end;
+    text-align: right; 
+}
+
+.booking-name {
+    font-weight: 700;
+}
+
+.booking-time {
+    font-weight: 700;
+}
+
+.booking-payment, .booking-type {
+    opacity: 0.8;
+}
+
+.booking-count {
+    color: #666;  /* Slightly lighter color */
+    margin: 0;
 }
