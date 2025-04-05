@@ -191,8 +191,10 @@ def generate_calendar(user_id, year, month, selected_date):
                     else:
                         # Current or future shifts - workday
                         day_class = 'work-day'
+
+                elif date_str in blocked_dates:
+                    day_class = 'blocked-date'
                 else:
-                    # Days without shifts or block days
                     day_class = 'off-day'
                 
                 # Now we create a dictionary object for the current day and add it to the week_days list
@@ -330,7 +332,7 @@ def get_shifts(user_id, year, month):
         # Query all shifts for this employee in the specified month
         cursor.execute(
             """
-            SELECT DISTINCT shift_date 
+            SELECT DISTINCT shift_date, end_time
             FROM shifts 
             WHERE employee_id = %s 
             AND shift_date >= %s 

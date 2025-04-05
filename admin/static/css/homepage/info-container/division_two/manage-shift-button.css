@@ -1,6 +1,5 @@
 .manage-shift-button{
     display: flex;
-    
     width: 20%;
 }
 
@@ -27,6 +26,8 @@
     font-weight: 600;
     line-height: normal;
     text-decoration: none;
+    margin-left: 4px;
+    margin-top: -6px;
 }
 
 .shift-button:hover {

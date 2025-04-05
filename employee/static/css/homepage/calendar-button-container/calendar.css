@@ -7,10 +7,39 @@
 .calendar-weekdays{
     display: flex;
     flex-direction: row;
-    border: 5px solid red;
+    text-decoration: underline;
     justify-content: space-around;
     
 }
+
+#sun{
+    transform: translateX(4px);
+}
+
+#mon{
+    transform: translateX(1px);
+}
+
+#tue{
+    transform: translateX(-3px);
+}
+
+#wed{
+    transform: translateX(-7px);
+}
+
+#thu{
+    transform: translateX(-13px);
+}
+
+#fri{
+    transform: translateX(-15px);
+}
+
+#sat{
+    transform: translateX(-9px);
+}
+
 
 .calendar-weekdays h1{
     font-family: "Delval Galanogrotesque", sans-serif;
@@ -19,13 +48,13 @@
     margin: 0px;
     padding: 10px;
     font-weight: 600;
-    border: 1px solid black;
+    
 }
 
 .calendar-days{
     display: flex;
     flex-direction: column;
-    border: 1px solid black;
+    
     width: 100%;
     min-height: 36vh;
     height: auto;
@@ -34,7 +63,7 @@
 .week{
     display: flex;
     height: 6vh;
-    border: 1px solid red;
+    
     justify-content: space-around;
     align-items: center;
     margin: 6.5px;
@@ -74,6 +103,10 @@
     user-select: none;     
 }
 
+#off{
+    background: rgba(0, 0, 0, 0.20);
+}
+
 #completed {
     background: rgba(144, 238, 144, 0.6); 
 }
@@ -88,7 +121,7 @@
 
 
 #empty{
-    background: white;
+    background-color:#ebebeb;
     pointer-events: none;
     cursor: default;
 }

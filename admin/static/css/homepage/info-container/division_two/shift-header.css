@@ -8,7 +8,7 @@
 
 .shift-header h1{
     margin: 0;
-    
+    text-align: left;
 }
 
 .shift-header hr {
@@ -17,5 +17,28 @@
     background-color: black;
     margin: 8px 0 20px 0; 
     width: 52vh;
+    border: 2px solid black;
+}
+
+
+.bookings-header{
+    display: flex;
+    padding: 0;
+    margin: 0;
+    width: 79.45%;
+    flex-direction: column;
+}
+
+.bookings-header h1{
+    margin: 0;
+    text-align: left;
+}
+
+.bookings-header hr {
+    border: none;
+    height: 20px;
+    background-color: black;
+    margin: 8px 0 20px 0; 
+    width: 78vh;
     border: 2px solid black;
 }

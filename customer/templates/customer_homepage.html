@@ -33,41 +33,45 @@
             </div>
         </div>
 
-        <div class="info-container">
-            <div class="date-label-container">
-                <div class="current-date-header">
-                    <h1 id="datetime"><b>{{ display_date }}<br>
-                    <hr>
+        <div class="selection-container">
+            <div class="info-container">
+                <div class="date-label-container">
+                    <div class="current-date-header">
+                        <h1 id="datetime"><b>{{ display_date }}<br>
+                        <hr>
+                    </div>
                 </div>
+                
+                <form action="{{ url_for('customer.book_appointment') }}" method="POST">
+                    <input type="hidden" name="selected_date" value="{{ selected_date }}">
+                    
+                    <div class="timeslots-container">
+                        {% if available_timeslots %}
+                            {% for slot in available_timeslots %}
+                                <div class="timeslot-item">
+                                    <input type="radio" class="timeslot-radio" id="slot-{{ slot.slot_id }}" name="slot_id" value="{{ slot.slot_id }}" required>
+                                    
+                                    <label class="timeslot-label" for="slot-{{ slot.slot_id }}">
+                                        {{ slot.start_time }} - {{ slot.end_time }}
+                                        <div class="availability">{{ slot.available_slots }} spot(s) available</div>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-slots-message">
+                                No available time slots for this date.
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if available_timeslots %}
+                    <div class="button-container">
+                        <button type="submit" id="next">Next</button>
+                    </div>
+                    {% endif %}
+                </form>
             </div>
             
-            <form action="{{ url_for('customer.book_appointment') }}" method="POST">
-                <input type="hidden" name="selected_date" value="{{ selected_date }}">
-                
-                <div class="timeslots-container">
-                    {% if available_timeslots %}
-                        {% for slot in available_timeslots %}
-                            <div class="timeslot-item">
-                                <input type="radio" class="timeslot-radio" id="slot-{{ slot.slot_id }}" name="slot_id" value="{{ slot.slot_id }}">
-                                
-                                <label class="timeslot-label" for="slot-{{ slot.slot_id }}">
-                                    {{ slot.start_time }} - {{ slot.end_time }}
-                                    <div class="availability">{{ slot.available_slots }} spot(s) available</div>
-                                </label>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="no-slots-message">
-                            No available time slots for this date.
-                        </div>
-                    {% endif %}
-                </div>
-            
-                <div class="button-container">
-                    <button type="submit" id="next">Next</button>
-                </div>
-            </form>
-
         </div>
     </div>
 
