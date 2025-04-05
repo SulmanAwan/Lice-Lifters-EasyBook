@@ -1299,11 +1299,6 @@ def delete_booking(booking_id):
     # Re-render the manage_bookings page
     return redirect(url_for('admin.manage_bookings'))
 
-@admin.route('/analytics_dashboard', methods=['GET'])
-def analytics_dashboard():
-    # TODO: implement dashboard
-    return render_template('analytics_dashboard.html')
-
 @admin.route('/manage_timeslots/<selected_date>', methods=['GET'])
 def manage_timeslots(selected_date):
     # Convert string date to date object (make it date object for query)
