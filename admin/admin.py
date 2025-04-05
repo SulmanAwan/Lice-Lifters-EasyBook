@@ -1564,6 +1564,32 @@ def analytics_dashboard():
     unpopular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_end_time_index
     format_less_popular_end_time_slot = unpopular_end_time_datetimeformat.strftime("%I:%M %p")
 
+    # Average satisfaction score
+    cursor.execute("SELECT AVG(rating) AS avg_rating FROM reviews WHERE rating IS NOT NULL")
+    result = cursor.fetchone()
+    avg_rating = round(result['avg_rating'], 2) if result['avg_rating'] else "No ratings yet"
+
+    # Revenue from Head Check
+    cursor.execute("""
+        SELECT SUM(pt.amount) AS total_revenue
+        FROM bookings b
+        JOIN booking_types bt ON b.type_id = bt.type_id
+        JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+        WHERE bt.type_name = 'lice check'
+    """)
+    head_check_revenue = cursor.fetchone()['total_revenue'] or 0
+
+    # Revenue from Lice Removal
+    cursor.execute("""
+        SELECT SUM(pt.amount) AS total_revenue
+        FROM bookings b
+        JOIN booking_types bt ON b.type_id = bt.type_id
+        JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+        WHERE bt.type_name = 'lice removal'
+    """)
+    lice_removal_revenue = cursor.fetchone()['total_revenue'] or 0
+
+
     cursor.close()
     conn.close()
    
@@ -1576,5 +1602,8 @@ def analytics_dashboard():
                            format_popular_start_time_slot=format_popular_start_time_slot, 
                            format_less_popular_start_time_slot=format_less_popular_start_time_slot,
                            format_less_popular_end_time_slot=format_less_popular_end_time_slot,
-                           total_amount=total_amount
+                           total_amount=total_amount,
+                           lice_removal_revenue=lice_removal_revenue,
+                            head_check_revenue=head_check_revenue,
+                            avg_rating=avg_rating
                            )

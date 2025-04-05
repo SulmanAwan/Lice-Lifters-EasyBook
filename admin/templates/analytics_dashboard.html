@@ -24,10 +24,10 @@
         <div> <span class="bold">Most popular day:</span> {{ popular_day }} </div>
         <div> <span class="bold">Less popular day:</span> {{ unpopular_day }} </div>
             <div class="additionalspace"></div>
-        <div> <span class="bold">Revenue from lice check:</span> () </div>
-        <div> <span class="bold">Revenue from lice removal:</span> () </div>
+        <div> <span class="bold">Revenue from lice check:</span> {{head_check_revenue}} </div>
+        <div> <span class="bold">Revenue from lice removal:</span> {{lice_removal_revenue}} </div>
             <div class="additionalspace"></div>
-        <div> <span class="bold">Satisfaction score(out of five):</span> () </div>
+        <div> <span class="bold">Satisfaction score(out of five):</span> {{ avg_rating }} </div>
         <div> <span class="bold">Total booking:</span> {{ total_amount }} </div>
     </div>
 {% endblock %}
