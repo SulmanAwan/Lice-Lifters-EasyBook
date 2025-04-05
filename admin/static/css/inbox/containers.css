@@ -13,6 +13,8 @@
     margin-right: 9vh;
     margin-bottom: 6vh;
     gap: 6vh;
+    overflow-y: auto;
+    max-height: 60vh;
 }
 
 .message-container{
