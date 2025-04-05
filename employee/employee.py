@@ -184,16 +184,27 @@ def generate_calendar(user_id, year, month, selected_date):
                 date_str = current_date.strftime('%Y-%m-%d')
                 
                 # Determine class based on date and shifts
-                if date_str in shifts and date_str not in blocked_dates:
+                if date_str in shifts:
+                    # Check if its a past day if it is mark as completed
                     if current_date < today:
-                        # Shifts in the past (before today) - completed
                         day_class = 'completed-day'
-                    else:
-                        # Current or future shifts - workday
-                        day_class = 'work-day'
 
+                    # Check if its current day and that the end time < current time if it is then mark as completed
+                    # Otherwise mark it as a workday
+                    elif current_date == today:
+                        shift_completed = is_shift_completed(user_id, today)
+                        if shift_completed:
+                            day_class = 'completed-day'
+                        else:
+                            day_class = 'work-day'
+                    # If its a future shift then mark as workday
+                    else:
+                        
+                        day_class = 'work-day'
+                # If its a blocked date mark as blocked date
                 elif date_str in blocked_dates:
                     day_class = 'blocked-date'
+                # Otherwise its just an off day
                 else:
                     day_class = 'off-day'
                 
@@ -222,6 +233,55 @@ def generate_calendar(user_id, year, month, selected_date):
     # In the end we will have a list of weeks for the calendar and each week will have a list of days and each 
     # day will be a dictionary object containing the data required for the Jinja2 template to render the calendar correctly.
     return calendar_weeks
+
+def is_shift_completed(user_id, date):
+    """
+    Check if the shift for a given employee on a given date is completed (end time has passed)
+    Returns True if completed, False otherwise
+    """
+    # Need to check for a given employee and given date if the shift is completed on the date 
+    # (ie endtime of shift < current time)
+
+    # Get current time
+    now = datetime.datetime.now().time()
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get the shift for the current day for this employee and get the end_time
+        cursor.execute("""
+            SELECT end_time 
+            FROM shifts 
+            WHERE employee_id = %s AND shift_date = %s
+        """, (user_id, date))
+        
+        result = cursor.fetchone()
+        
+        if result:
+            # We need to convert the end_time from deltatime (given from database)
+            # into a datetime.time object so we can compare it
+            end_time_seconds = result['end_time'].total_seconds()
+            end_hours = int(end_time_seconds // 3600)
+            end_minutes = int((end_time_seconds % 3600) // 60)
+            end_seconds = int(end_time_seconds % 60)
+            
+            shift_end_time = datetime.time(hour=end_hours, minute=end_minutes, second=end_seconds)
+            
+            # Return True if current time is past the end time
+            return now > shift_end_time
+
+        # Otherwise we return false to indicate the shift is not completed yet
+        return False
+    
+    except Exception as e:
+        print(f"Error checking if shift is completed: {str(e)}")
+        return False
+    
+    finally:
+        cursor.close()
+        conn.close()
 
 def get_blocked_dates(year, month):
     # Helper method for the generate_calendar method
