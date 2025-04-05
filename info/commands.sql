@@ -102,7 +102,6 @@ CREATE TABLE notifications (
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
-    notification_type ENUM('reminder', 'appointment_canceled') NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
