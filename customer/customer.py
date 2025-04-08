@@ -257,13 +257,28 @@ def get_available_timeslots_for_date(date):
     
     try:
         # Get the available timeslots for the selected date (current_bookings < max_bookings)
-        cursor.execute("""
-            SELECT slot_id, start_time, end_time, current_bookings, max_bookings
-            FROM time_slots
-            WHERE slot_date = %s AND current_bookings < max_bookings
-            ORDER BY start_time
-        """, (date,))
-        
+        # Get the available timeslots for the selected date (current_bookings < max_bookings)
+        today = datetime.datetime.today().date()  # Get today's date
+        current_time = datetime.datetime.now().time()  # Get the current time
+
+        # If the selected date is today, we need to check for past timeslots
+        if date == today:
+            cursor.execute("""
+                SELECT slot_id, start_time, end_time, current_bookings, max_bookings
+                FROM time_slots
+                WHERE slot_date = %s AND current_bookings < max_bookings
+                AND start_time > %s
+                ORDER BY start_time
+            """, (date, current_time))
+        else:
+            # For dates other than today, no need to filter by current time
+            cursor.execute("""
+                SELECT slot_id, start_time, end_time, current_bookings, max_bookings
+                FROM time_slots
+                WHERE slot_date = %s AND current_bookings < max_bookings
+                ORDER BY start_time
+            """, (date,))
+
         timeslots = cursor.fetchall()
         
         # Format times for display and calculate the available timeslots
