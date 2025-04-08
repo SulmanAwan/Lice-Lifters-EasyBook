@@ -99,7 +99,7 @@
 }
 
 #block{
-    background: rgba(0, 0, 0, 0.20);
+    background: rgba(0, 0, 0, 0.70);
     pointer-events: none;
     cursor: default;
 
@@ -113,6 +113,12 @@
     background: rgba(41, 147, 254, 0.50);
 }
 
+#past-day{
+    background: rgba(0, 0, 0, 0.20);
+    pointer-events: none;  
+    cursor: default;      
+    user-select: none;     
+}
 
 #empty{
     background:#ebebeb;

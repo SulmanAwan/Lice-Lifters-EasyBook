@@ -111,10 +111,14 @@ def generate_calendar(year, month, selected_date):
                 date_str = current_date.strftime('%Y-%m-%d')
                 
                 # We check to see if the current iteration of the date is in the block_dates list
-                if date_str in blocked_dates or current_date < today:
+                if current_date < today and date_str not in blocked_dates:
                     # If it is then we assign the class to be 'blocked-day' (used for styling)
                     # day_class will be assigned to the class attribute of the day object
+                    day_class = 'past-day'
+
+                elif date_str in blocked_dates:
                     day_class = 'blocked-day'
+
                 else:
                     # If not then we assign the class to be 'business-day' (used for styling)
                     day_class = 'business-day'
