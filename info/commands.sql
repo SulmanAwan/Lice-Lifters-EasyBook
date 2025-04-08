@@ -3,7 +3,7 @@ CREATE DATABASE easybook;
 USE easybook;
 
 -- Making admin account
-INSERT INTO users (name, email, password, permission) 
+INSERT IGNORE INTO users (name, email, password, permission) 
 VALUES ('admin', 'admin@gmail.com', 'admin', 'admin');
 
 -- Users table: Record of all users
@@ -105,3 +105,6 @@ CREATE TABLE notifications (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+-- Data that should be inserted for app to function properly:
+INSERT INTO booking_types (type_name, price)
+VALUES ('Lice Check', 40.00),('Lice Removal', 189.00);
