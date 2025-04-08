@@ -1476,6 +1476,7 @@ def generate_default_timeslots(selected_date):
     
     # We render the page again with the selected_date
     return redirect(url_for('admin.manage_timeslots', selected_date=selected_date))
+
 @admin.route('/analytics_dashboard', methods=['GET'])
 def analytics_dashboard():
 
@@ -1497,42 +1498,57 @@ def analytics_dashboard():
         WHERE appointment_status = "cancel"
         """)
     total_cancel = cursor.fetchall()
+
+    
     for row in total_cancel:
         total_cancel_amount = total_cancel[0]["COUNT(appointment_status)"]
     for row in total_booking:
         total_amount = total_booking[0]["COUNT(booking_id)"]
-    appointment_cancellation_rate = (total_cancel_amount / total_amount) * 100
 
-    # Query for popular days
+    if total_amount != 0:
+        appointment_cancellation_rate = round((total_cancel_amount / total_amount) * 100, 2)
+    else:
+        appointment_cancellation_rate = 0
+
+    # Query for most popular days
     cursor.execute("""
         SELECT slot_date, COUNT(*) AS popular_date
         FROM time_slots
+        WHERE current_bookings > 0
         GROUP BY slot_date
-        ORDER BY popular_date DESC
+        ORDER BY popular_date DESC, slot_date DESC
         LIMIT 1
-        """)
+    """)
     unformated_popular_day_date = cursor.fetchall()
-    # Converting date into a single day
-    popular_day_date_index = unformated_popular_day_date[0]["slot_date"]
-    popular_day = popular_day_date_index.strftime("%A")
-    
-    # Query for less popular days
+    # Check if there's a result for popular day
+    if unformated_popular_day_date:
+        popular_day_date = unformated_popular_day_date[0]["slot_date"]
+        popular_day = popular_day_date.strftime("%A")
+    else:
+        popular_day = "N/A"
+
+    # Query for least popular days
     cursor.execute("""
         SELECT slot_date, COUNT(*) AS less_popular_date
         FROM time_slots
+        WHERE current_bookings > 0
         GROUP BY slot_date
-        ORDER BY less_popular_date ASC
+        ORDER BY less_popular_date ASC, slot_date ASC
         LIMIT 1
     """)
     less_popular_day_date = cursor.fetchall()
-    # Converting date into a single day
-    unpopular_day_date_index = less_popular_day_date[0]["slot_date"]
-    unpopular_day = unpopular_day_date_index.strftime("%A")
+    # Check if there's a result for less popular day
+    if less_popular_day_date:
+        unpopular_day_date = less_popular_day_date[0]["slot_date"]
+        unpopular_day = unpopular_day_date.strftime("%A")
+    else:
+        unpopular_day = "N/A"
 
     # Query for most popular time slot
     cursor.execute("""
         SELECT start_time, end_time, COUNT(*) as popular_timing
         FROM time_slots
+        WHERE current_bookings > 0
         GROUP BY start_time, end_time
         ORDER BY popular_timing DESC
         LIMIT 1
@@ -1540,29 +1556,38 @@ def analytics_dashboard():
     unformated_popular_time_slot = cursor.fetchall()
     # Converts database format of time into hours/minutes/AM or PM
     #(1900,1,1) was used as a base so that the value works as a datetime object. As long as the values aren't 0 then any other examples work
-    popular_start_time_index = unformated_popular_time_slot[0]['start_time']
-    popular_end_time_index = unformated_popular_time_slot[0]['end_time']
-    popular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_start_time_index
-    format_popular_start_time_slot = popular_start_time_datetimeformat.strftime("%I:%M %p")
-    popular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_end_time_index
-    format_popular_end_time_slot = popular_end_time_datetimeformat.strftime("%I:%M %p")
-    
+    if unformated_popular_time_slot:
+        popular_start_time_index = unformated_popular_time_slot[0]['start_time']
+        popular_end_time_index = unformated_popular_time_slot[0]['end_time']
+        popular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_start_time_index
+        format_popular_start_time_slot = popular_start_time_datetimeformat.strftime("%I:%M %p")
+        popular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_end_time_index
+        format_popular_end_time_slot = popular_end_time_datetimeformat.strftime("%I:%M %p")
+    else:
+        format_popular_start_time_slot = "N/A"
+        format_popular_end_time_slot = "N/A"
+
     # Query for less popular time slot
     cursor.execute("""
         SELECT start_time, end_time, COUNT(*) as less_popular_timing
         FROM time_slots
+        WHERE current_bookings > 0
         GROUP BY start_time, end_time
         ORDER BY less_popular_timing ASC
         LIMIT 1
     """)
     unformated_less_popular_time_slot = cursor.fetchall()
     # Converts database format of time into hours/minutes/AM or PM
-    unpopular_start_time_index = unformated_less_popular_time_slot[0]['start_time']
-    unpopular_end_time_index = unformated_less_popular_time_slot[0]['end_time']
-    unpopular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_start_time_index
-    format_less_popular_start_time_slot = unpopular_start_time_datetimeformat.strftime("%I:%M %p")
-    unpopular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_end_time_index
-    format_less_popular_end_time_slot = unpopular_end_time_datetimeformat.strftime("%I:%M %p")
+    if unformated_less_popular_time_slot:
+        unpopular_start_time_index = unformated_less_popular_time_slot[0]['start_time']
+        unpopular_end_time_index = unformated_less_popular_time_slot[0]['end_time']
+        unpopular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_start_time_index
+        format_less_popular_start_time_slot = unpopular_start_time_datetimeformat.strftime("%I:%M %p")
+        unpopular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_end_time_index
+        format_less_popular_end_time_slot = unpopular_end_time_datetimeformat.strftime("%I:%M %p")
+    else:
+        format_less_popular_start_time_slot = "N/A"
+        format_less_popular_end_time_slot = "N/A"
 
     # Average satisfaction score
     cursor.execute("SELECT AVG(rating) AS avg_rating FROM reviews WHERE rating IS NOT NULL")

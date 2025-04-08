@@ -18,8 +18,20 @@
     <div class="analytics"> 
         <div> <span class="bold">Appointment cancellation rate:</span> {{ appointment_cancellation_rate }}% </div>
             <div class="additionalspace"></div>
-        <div> <span class="bold">Most popular time slot:</span> {{ format_popular_start_time_slot }} - {{ format_popular_end_time_slot }} </div>
-        <div> <span class="bold">Less popular time slot:</span> {{ format_less_popular_start_time_slot }} - {{ format_less_popular_end_time_slot }} </div>
+        <div> <span class="bold">Most popular time slot:</span> 
+            {% if format_popular_start_time_slot != "N/A" %}
+                {{ format_popular_start_time_slot }} - {{ format_popular_end_time_slot }} 
+            {% else %}
+                N/A
+            {% endif %}
+        </div>
+        <div> <span class="bold">Less popular time slot:</span>
+            {% if format_less_popular_start_time_slot != "N/A" %}
+                {{ format_less_popular_start_time_slot }} - {{ format_less_popular_end_time_slot }}
+            {% else %}
+                N/A
+            {% endif %}
+        </div>
             <div class="additionalspace"></div>
         <div> <span class="bold">Most popular day:</span> {{ popular_day }} </div>
         <div> <span class="bold">Less popular day:</span> {{ unpopular_day }} </div>
