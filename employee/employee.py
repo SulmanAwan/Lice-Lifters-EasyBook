@@ -184,7 +184,7 @@ def generate_calendar(user_id, year, month, selected_date):
                 date_str = current_date.strftime('%Y-%m-%d')
                 
                 # Determine class based on date and shifts
-                if date_str in shifts:
+                if date_str in shifts and date_str not in blocked_dates:
                     # Check if its a past day if it is mark as completed
                     if current_date < today:
                         day_class = 'completed-day'
