@@ -151,6 +151,9 @@ def generate_calendar(year, month, selected_date):
     # Get the day of the week for the first day (0 = Monday, 6 = Sunday) For instance, March 1, 2025 is a Saturday so it will return 5
     first_weekday = first_day.weekday()
     
+    # Get current date for comparing past dates
+    today = datetime.date.today()
+
     # Our calendar headings for the weekday will be 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
     # So we need to adjust the first_weekday to match this format
     # Adjust for Sunday as the first day of the week (0 = Sunday, 6 = Saturday)
@@ -180,13 +183,17 @@ def generate_calendar(year, month, selected_date):
                 # and use the strftime method to convert it to a string in the format 'YYYY-MM-DD'
                 # We need it in the string format since the block_dates is a list of strings with the format 'YYYY-MM-DD' ...
                 # containing the block date
-                date_str = datetime.date(year, month, day).strftime('%Y-%m-%d')
+                current_date = datetime.date(year, month, day)
+                date_str = current_date.strftime('%Y-%m-%d')
                 
-                # We check to see if the current iteration of the date is in the block_dates list
-                if date_str in blocked_dates:
-                    # If it is then we assign the class to be 'blocked-day' (used for styling)
-                    # day_class will be assigned to the class attribute of the day object
+                # Check if its a past date and is not blocked
+                if current_date < today and date_str not in blocked_dates:
+                    day_class = 'past-day'
+
+                # Check if the current day is blocked
+                elif date_str in blocked_dates:
                     day_class = 'blocked-day'
+
                 else:
                     # If not then we assign the class to be 'business-day' (used for styling)
                     day_class = 'business-day'

@@ -112,6 +112,10 @@
 }
 
 
+#past{
+    background: rgba(0, 0, 0, 0.20);
+}
+
 #empty{
     background: #ebebeb;
     pointer-events: none;

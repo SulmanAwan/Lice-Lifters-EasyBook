@@ -21,6 +21,7 @@
                     <a href="{{ url_for('admin.admin_homepage', selected_date=day.date) }}" 
                        {% if day.date == selected_date %}id="current"{% endif %}
                        {% if day.class == 'blocked-day' %}id="block"{% endif %}
+                       {% if day.class == 'past-day' %}id="past"{% endif %}
                        {% if day.class == 'business-day' %}id="business-day"{% endif %}>
                         {{ day.day }}
                     </a>
