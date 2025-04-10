@@ -422,5 +422,82 @@ def online_payment():
 
 @customer.route('/manage_appointments', methods=['GET', 'POST'])
 def manage_appointments():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True) 
 
-    return render_template('manage_appointments.html') 
+    customer_id = session['user_id']
+
+    # Query the bookings table for this customer
+    cursor.execute("""
+        SELECT booking_id, appointment_status
+        FROM bookings
+        WHERE customer_id = %s
+    """, (customer_id,))
+
+    bookings = cursor.fetchall()
+    conn.close()
+
+
+    return render_template('manage_appointments.html', bookings=bookings)
+
+@customer.route('/review')
+def review():
+    booking_id = request.args.get('booking_id')
+    customer_id = request.args.get('customer_id')
+
+    if not booking_id or not customer_id:
+        flash('Missing booking or customer information.', 'error')
+        return redirect(url_for('customer.manage_appointments'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT ts.slot_date
+        FROM bookings b
+        JOIN time_slots ts ON b.slot_id = ts.slot_id
+        WHERE b.booking_id = %s
+    """, (booking_id,))
+    appointment = cursor.fetchone()
+    conn.close()
+
+    if appointment:
+        appointment_date = appointment[0].strftime('%A, %B %d, %Y')
+    else:
+        appointment_date = "Date not found"
+
+    return render_template('review.html',
+                           booking_id=booking_id,
+                           customer_id=customer_id,
+                           appointment_date=appointment_date)
+
+@customer.route('/submit_review', methods=['POST'])
+def submit_review():
+    booking_id = request.form['booking_id']
+    customer_id = request.form['customer_id']
+    rating = request.form['rating']
+    review_text = request.form['review_text']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Check for existing review
+    cursor.execute("""
+        SELECT * FROM reviews WHERE booking_id = %s AND customer_id = %s
+    """, (booking_id, customer_id))
+    existing_review = cursor.fetchone()
+
+    if existing_review:
+        conn.close()
+        flash('You have already submitted a review for this appointment.', 'info')
+        return redirect(url_for('customer.manage_appointments'))
+
+    # Insert the new review
+    cursor.execute("""
+        INSERT INTO reviews (booking_id, customer_id, rating, comment)
+        VALUES (%s, %s, %s, %s)
+    """, (booking_id, customer_id, rating, review_text))
+    conn.commit()
+    conn.close()
+
+    return render_template('reviewsuccess.html')

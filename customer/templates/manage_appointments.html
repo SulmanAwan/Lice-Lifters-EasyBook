@@ -2,9 +2,16 @@
 
 {% block title %}Manage Appointments{% endblock %}
 
-{% block extra_css %} 
-{% endblock %}
-
 {% block content %}
-Manage Appointments Page
+<h2>Manage Appointments Page (Placeholder)</h2>
+<p>This is a placeholder page while the main page is being developed by eric.</p>
+{% for booking in bookings %}
+    {% if booking.appointment_status == 'past' %}
+        <p><strong>Leave a Review for Booking</strong></p>
+        <a href="{{ url_for('customer.review', booking_id=booking.booking_id, customer_id=session['user_id']) }}">
+            <button>Leave a Review</button>
+        </a>
+    {% endif %}
+{% endfor %}
+
 {% endblock %}
