@@ -2,6 +2,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from db import get_db_connection
 import calendar
 import datetime
+import stripe
+from extensions import mail
+from flask_mail import Message
+from dotenv import load_dotenv
+import os
 
 customer = Blueprint('customer', __name__, template_folder='templates', static_folder='static')
 
@@ -405,22 +410,217 @@ def schedule_appointment(slot_id):
         cursor.close()
         conn.close()
 
+# Stripe API Configuration
+load_dotenv()
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
+
+stripe.api_key = STRIPE_SECRET_KEY
+
 @customer.route('/online_payment', methods=['GET', 'POST'])
 def online_payment():
+    # We pass in the necessary fields required to add a booking 
     appointment_type = request.args.get('appointment_type')
     slot_id = request.args.get('slot_id')
     payment_method = request.args.get('payment_method')
     user_id = request.args.get('user_id')
 
-    # TODO: Implement Stripe Online Payment System here to process online payments
+    # Set the price based on the appointment type (this is required for stripe payment)
+    if appointment_type == "Lice Check":
+        price = 4000
+    else:
+        price = 18900
 
-    return render_template('online_payment.html', 
-                    appointment_type=appointment_type,
-                    slot_id=slot_id,
-                    payment_method=payment_method,
-                    user_id=user_id)
+    # Get the date from the slot_id and customer email
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # We retrieve the slot date and format it so it can be passed back into book_appointment page in case user cancels
+    cursor.execute("SELECT slot_date FROM time_slots WHERE slot_id = %s", (slot_id,))
+    slot_date = cursor.fetchone()
+    date_str = slot_date['slot_date'].strftime('%Y-%m-%d')
+
+    # We pass the user email to the stripe checkout session
+    cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+    customer_email = cursor.fetchone()['email']
+
+    cursor.close()
+    conn.close()
+
+    # We create a stripe checkout session and redirect the user to the stripe payment page
+    # We provide the price, appointment type, and customer email to the session.
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'usd',
+                'product_data': {
+                    'name': appointment_type,
+                },
+                'unit_amount': price,
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        # Upon a successful payment, redirect the user to the payment_success route with all the necessary data required to create a new booking record
+        success_url=url_for('customer.payment_success', _external=True) + f'?session_id={{CHECKOUT_SESSION_ID}}&user_id={user_id}&slot_id={slot_id}&appointment_type={appointment_type}&payment_method={payment_method}',
+        # Upon a canceled payment, redirect the user to the payment_cancel route with the same slot_id and date so the book_appointment page can be rendered with the flash msg indication
+        cancel_url=url_for('customer.payment_cancel', _external=True) + f'?slot_id={slot_id}&date={date_str}',
+        customer_email=customer_email
+    )
+    return redirect(session.url, code=303)
 
 @customer.route('/manage_appointments', methods=['GET', 'POST'])
 def manage_appointments():
 
     return render_template('manage_appointments.html') 
+
+@customer.route('/payment_cancel', methods=['GET'])
+def payment_cancel():
+    # Get parameters from query string to render book_appointment page again
+    slot_id = request.args.get('slot_id')
+    date_str = request.args.get('date')
+    user_id = session.get('user_id')
+
+    # Flash a message to the user to let them know payment was canceled
+    flash('Payment was canceled. You can try again or choose a different payment method.', 'warning')
+    
+    # Connect to database to get the timeslot information again
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get the selected timeslot again from database and format it for the page
+    cursor.execute("""
+                   SELECT start_time, end_time
+                   FROM time_slots
+                   WHERE slot_id = %s
+                   """, (slot_id,))
+    
+    selected_slot = cursor.fetchone()
+    
+    # Format the date and time
+    date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+    display_date = date_obj.strftime('%B %d, %Y')
+    
+    # Format the time into 12-hour format
+    selected_slot['formatted_start_time'] = format_time(selected_slot['start_time'])
+    selected_slot['formatted_end_time'] = format_time(selected_slot['end_time'])
+    
+    cursor.close()
+    conn.close()
+    
+    # Return to the book_appointment page with the same slot
+    return render_template('book_appointment.html', 
+                          display_date=display_date,
+                          slot_id=slot_id,
+                          user_id=user_id,
+                          selected_slot=selected_slot)
+
+
+@customer.route('/payment_success', methods=['GET'])
+def payment_success():
+    # Upon a success return from the stripe checkout session, we will need to add the new booking record
+    # Get all the required data for the new record
+    slot_id = request.args.get('slot_id')
+    user_id = request.args.get('user_id')
+    appointment_type = request.args.get('appointment_type')
+    payment_method = request.args.get('payment_method')
+    session_id = request.args.get('session_id')
+
+    # Retrieve the stripe checkout session
+    session = stripe.checkout.Session.retrieve(session_id)
+
+    # Get the PaymentIntent ID
+    payment_intent_id = session.get('payment_intent')
+
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get service type_id and price for the appointment_type specified by user
+        cursor.execute("""
+            SELECT type_id, price
+            FROM booking_types 
+            WHERE type_name = %s
+        """, (appointment_type,))
+        service_type = cursor.fetchone()
+
+        cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+        customer_email = cursor.fetchone()['email']
+
+        # Create payment transaction record using the payment_method and service_type price
+        cursor.execute("""
+            INSERT INTO payment_transactions 
+            (payment_method, amount, stripe_transaction_id) 
+            VALUES (%s, %s, %s)
+        """, (payment_method, service_type['price'], payment_intent_id))
+        
+        # Get the transaction ID of the newly inserted record (ie: the last row)
+        transaction_id = cursor.lastrowid
+
+        # Insert booking record with the newly created transaction_id and assign it the
+        # type_id, slot_id, and user_id it corresponds to
+        cursor.execute("""
+            INSERT INTO bookings 
+            (customer_id, type_id, transaction_id, slot_id, appointment_status) 
+            VALUES (%s, %s, %s, %s, 'current')
+        """, (user_id, service_type['type_id'], transaction_id, slot_id))
+
+        # Increment current bookings for the time slot (since new booking has been made)
+        cursor.execute("""
+            UPDATE time_slots 
+            SET current_bookings = current_bookings + 1 
+            WHERE slot_id = %s
+        """, (slot_id,))
+
+        # Get the time slot information for formatting the date and time for the receipt
+        cursor.execute("""
+            SELECT slot_date, start_time, end_time
+            FROM time_slots
+            WHERE slot_id = %s
+        """, (slot_id,))
+        slot_info = cursor.fetchone()
+        
+        # Format the date: "Monday, January 1, 2025"
+        date_str = slot_info['slot_date'].strftime('%A, %B %d, %Y')
+        
+        # Format the time: "2:30 PM - 3:00 PM"
+        start_time_str = format_time(slot_info['start_time'])
+        end_time_str = format_time(slot_info['end_time'])
+        time_str = f"{start_time_str} - {end_time_str}"
+        
+        # Commit the changes and alert user that they have successfuly booked the appointment
+        conn.commit()
+
+        # Construct and send receipt emai;
+        msg = Message("Your Appointment Booking Receipt", recipients=[customer_email])
+        msg.body = f"""
+Thank you for booking
+
+Appointment Details:
+
+- Service: {appointment_type}
+- Date: {date_str}
+- Time: {time_str}
+- Amount Paid: ${service_type['price']}
+
+Your stripe transaction ID is: {payment_intent_id}
+"""
+        mail.send(msg) #send the email
+        
+        # flash user that their booking was successfully made and a receipt has been sent to their email
+        flash('Appointment booked successfully! A receipt has been sent to your email.', 'success')
+        
+    except Exception as e:
+        # In the case of error, display the error msg to user
+        flash(f'Error booking appointment: {str(e)}', 'error')
+    
+    finally:
+        # Close the database connection
+        cursor.close()
+        conn.close()
+
+    # Redirect to manage appointments page so the customer can now see their current bookings and all their past bookings
+    return redirect(url_for('customer.manage_appointments'))
