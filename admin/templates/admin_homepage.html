@@ -21,6 +21,9 @@
 <!--Division 3-->
 <link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_three/shifts.css">
 
+<!--Division 4-->
+<link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_four/modify-bookings-button.css">
+
 <!--Division 5-->
 <link rel="stylesheet" type="text/css" href="static/css/homepage/info-container/division_five/bookings.css">
 {% endblock %}
@@ -113,6 +116,12 @@
                     <div class="bookings-header">
                         <h1>Bookings <span class="booking-count">{% if bookings %}({{ bookings|length }}){% endif %}</span></h1>
                         <hr>
+                    </div>
+
+                    <div class="modify-bookings-button">
+                        <a href="{{ url_for('admin.manage_bookings', selected_date=selected_date) }}" class="bookings-button">
+                            Modify Bookings
+                        </a>
                     </div>
                 </div>
 

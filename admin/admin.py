@@ -911,6 +911,9 @@ def manage_bookings():
         service_filter = request.form.get('service', 'all')
         rating_filter = request.form.get('rating', 'any')
         name_filter = request.form.get('searchname', None)
+    # This is the GET method for when the admin clicks on the modify bookings button, to have the filter loaded with the selected date
+    else:
+        date_filter = request.args.get('selected_date', None)
 
     # We need to query the database for the data based on the current filter settings:  
     conn = get_db_connection()

@@ -1,0 +1,37 @@
+.modify-bookings-button{
+    display: flex;
+    width: 20%;
+}
+
+.bookings-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    border: 1px solid rgba(34, 111, 188, 0.8);
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease;
+    width: 16vh;
+    height: 85%;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(22, 106, 190, 0.8);
+    color: #FFF;
+    text-align: center;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    text-decoration: none;
+    margin-left: 4px;
+    margin-top: -6px;
+}
+
+.bookings-button:hover {
+    background: rgba(22, 106, 190, 0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
