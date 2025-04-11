@@ -393,10 +393,47 @@ def schedule_appointment(slot_id):
             SET current_bookings = current_bookings + 1 
             WHERE slot_id = %s
         """, (slot_id,))
+
+        # Get the time slot information for formatting the date and time for the receipt
+        cursor.execute("""
+            SELECT slot_date, start_time, end_time
+            FROM time_slots
+            WHERE slot_id = %s
+        """, (slot_id,))
+        slot_info = cursor.fetchone()
         
-        # Commit the changes and alert user that they have successfuly booked the appointment
+        # Format the date: "Monday, January 1, 2025"
+        date_str = slot_info['slot_date'].strftime('%A, %B %d, %Y')
+        
+        # Format the time: "2:30 PM - 3:00 PM"
+        start_time_str = format_time(slot_info['start_time'])
+        end_time_str = format_time(slot_info['end_time'])
+        time_str = f"{start_time_str} - {end_time_str}"
+
         conn.commit()
-        flash('Appointment booked successfully!', 'success')
+
+        if payment_method == "in_store":
+            # If the payment method is in-store, we need to send a receipt to the customer via email
+            cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+            customer_email = cursor.fetchone()['email']
+
+            # Construct and send receipt email
+            msg = Message("Your Appointment Booking Receipt", recipients=[customer_email])
+
+            msg.body = f"""
+Thank you for booking!
+
+Appointment Details:
+
+- Service: {appointment_type}
+- Date: {date_str}
+- Time: {time_str}
+- Amount Due: ${service_type['price']}
+
+"""
+            mail.send(msg) #send the email
+        
+        flash('Appointment booked successfully! A confirmation email has been sent.', 'success')
         
         # Redirect to manage appointments or homepage
         return redirect(url_for('customer.manage_appointments'))
@@ -594,10 +631,10 @@ def payment_success():
         # Commit the changes and alert user that they have successfuly booked the appointment
         conn.commit()
 
-        # Construct and send receipt emai;
+        # Construct and send receipt email
         msg = Message("Your Appointment Booking Receipt", recipients=[customer_email])
         msg.body = f"""
-Thank you for booking
+Thank you for booking!
 
 Appointment Details:
 
