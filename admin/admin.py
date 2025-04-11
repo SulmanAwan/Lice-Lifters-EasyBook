@@ -2,8 +2,20 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from db import get_db_connection
 import calendar
 import datetime
+from flask_mail import Message
+from extensions import mail
 
 admin = Blueprint('admin', __name__, template_folder='templates', static_folder='static')
+
+# Method to send email
+def send_email(to, subject, body):
+    msg = Message(subject=subject,
+                  recipients=[to],  # Recipient emails
+                  body=body)  # The content of the email
+    try:
+        mail.send(msg)  # Sends email
+    except Exception as e:
+        flash(f'Unable to send email: {str(e)}', 'error')
 
 ############## Notes for using datetime module ###############
 
@@ -1132,14 +1144,58 @@ def modify_bookings(booking_id):
 
         # If it is a POST request we need to update the values
         if request.method == 'POST':
-            # Get form data (the new timeslot, new service type, new payment method, new stripe id)
+
+            # Keeps track of all changes in booking appointment
+            changes_towards_booking = []
+            # Used to connect appointment to customer
+            cursor.execute("""
+            SELECT b.booking_id, b.customer_id, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
+                   u.name as customer_name, u.email, bt.type_name as service_type, bt.price,
+                   pt.payment_method, b.appointment_status, pt.amount,
+                   pt.stripe_transaction_id as stripe_id
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN users u ON b.customer_id = u.user_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+            result = cursor.fetchone()
+            if result:
+                # Is used to locate specific customer to email
+                customer_email = result['email']
+                customer_name = result['customer_name']
+                # Used to list date
+                date_of_appointment_being_changed_before = result['slot_date']
+            else:
+                flash("Unable to find name or email of customer")
+
+            # Get form data (the new timeslot, new service type, new payment method, new stripe id, and new date)
             new_timeslot_id = request.form.get('timeslot')
             new_service_type = request.form.get('service_type')
             new_payment_method = request.form.get('payment_method')
             new_stripe_id = request.form.get('stripe_id', None)
             
+            # Get new timing of appointment change
+            cursor.execute("""
+            SELECT start_time, end_time, slot_date
+            FROM time_slots 
+            WHERE slot_id = %s
+            """, (new_timeslot_id,))
+            new_timeslot_data = cursor.fetchone()
+            new_time_start = format_time(new_timeslot_data['start_time'])
+            new_time_end = format_time(new_timeslot_data['end_time'])
+            new_timeslot_date = new_timeslot_data['slot_date']
+
+             # Sends to email if it is a different date
+            if date_of_appointment_being_changed_before != new_timeslot_date:
+                changes_towards_booking.append(f"Date changed from {result['slot_date']} to {new_timeslot_date}")
+
             # Check if there was a change in the timeslot id 
             if int(new_timeslot_id) != booking['slot_id']:
+                # Stores change into changes_towards_booking list
+                changes_towards_booking.append(f"Starting timeslot changed from {booking['formatted_start_time']} to {new_time_start}")
+                changes_towards_booking.append(f"Ending timeslot changed from {booking['formatted_end_time']} to {new_time_end}")
                 # If there is a change in the timeslot id then a new timeslot was chosen so we decrement current bookings in the old timeslot
                 cursor.execute("""
                     UPDATE time_slots
@@ -1153,10 +1209,10 @@ def modify_bookings(booking_id):
                     SET current_bookings = current_bookings + 1
                     WHERE slot_id = %s
                 """, (new_timeslot_id,))
-            
+
             # The form returns the actual name of the service, we need the id and the price of the service
             cursor.execute("""
-                SELECT type_id, price FROM booking_types
+                SELECT type_id, type_name, price FROM booking_types
                 WHERE type_name = %s
             """, (new_service_type,))
             
@@ -1164,9 +1220,14 @@ def modify_bookings(booking_id):
             
             new_service_type_id = service_type_result['type_id']
             new_price = service_type_result['price']
+
+            # Type name to be displayed in email
+            new_service_type_name = service_type_result['type_name']
             
             # Check if we're changing the service type
             if new_service_type_id != booking['type_id']:
+                # Stores change into changes_towards_booking list
+                changes_towards_booking.append(f"Service type changed from {result['service_type']} to {new_service_type_name} (New price is {new_price})")
                 # Update the payment_transactions table with the price of the new service
                 cursor.execute("""
                     UPDATE payment_transactions
@@ -1177,7 +1238,13 @@ def modify_bookings(booking_id):
             # Check if payment method has changed or if the stripe id has changed
             payment_update_needed = (new_payment_method != booking['payment_method'])
             stripe_update_needed = (new_stripe_id != booking['stripe_id'] and new_stripe_id is not None)
-            
+
+            # If there was change in update payment method then these 2 would switch to each other
+            if payment_update_needed:
+                changes_towards_booking.append(f"Payment method changed from {booking['payment_method']} to {new_payment_method}")
+            if stripe_update_needed:
+                changes_towards_booking.append(f"Stripe transaction changed from {booking['stripe_id']} to {new_stripe_id}")
+    
             if payment_update_needed or stripe_update_needed:
                 cursor.execute("""
                     UPDATE payment_transactions
@@ -1195,8 +1262,15 @@ def modify_bookings(booking_id):
             # Commit all changes
             conn.commit()
 
+            # If there was any changes, it sends email to customer associated with appointment booking
+            # \n\n gives a blank line space and \n seperates the sentences/lines
+            if changes_towards_booking:
+                subject = 'Booking status changed'
+                body = (f"Hi {customer_name},\n\n The following changes were made to your booking:\n\n" +
+               '\n'.join(changes_towards_booking))
+                send_email(customer_email, subject, body)
 
-            # If everything was succcesful then the update was valid and we alert that to the user
+            # If everything was successful then the update was valid and we alert that to the user
             flash('Booking updated successfully', 'success')
             return redirect(url_for('admin.manage_bookings'))
 
@@ -1208,7 +1282,7 @@ def modify_bookings(booking_id):
         # In case of error, we alert the user and take them back to the manage_bookings page
         flash(f'Error processing booking: {str(e)}', 'error')
         return redirect(url_for('admin.manage_bookings'))
-        
+    
     finally:
         cursor.close()
         conn.close()
@@ -1220,6 +1294,7 @@ def modify_bookings(booking_id):
                            available_timeslots=available_timeslots,
                            current_timeslot=current_timeslot,
                            service_types=service_types)
+
 @admin.route('/get_available_timeslots/<date>', methods=['GET'])
 def get_available_timeslots(date):
     try:
@@ -1275,6 +1350,30 @@ def delete_booking(booking_id):
         
         booking = cursor.fetchone()
         
+        # Used to connect appointment to customer and done at this part before being updated
+        cursor.execute("""
+        SELECT b.booking_id, b.customer_id, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
+                u.name as customer_name, u.email, bt.type_name as service_type, bt.price,
+                pt.payment_method, b.appointment_status, pt.amount,
+                pt.stripe_transaction_id as stripe_id
+        FROM bookings b
+        JOIN time_slots ts ON b.slot_id = ts.slot_id
+        JOIN users u ON b.customer_id = u.user_id
+        JOIN booking_types bt ON b.type_id = bt.type_id
+        JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+        WHERE b.booking_id = %s
+        """, (booking_id,))
+        result = cursor.fetchone()
+        if result:
+            # Is used to locate specific customer to email and provide the day and time
+            customer_email = result['email']
+            customer_name = result['customer_name']
+            customer_day = result['slot_date'].strftime('%Y-%m-%d')
+            customer_time_start = format_time(result['start_time'])
+            customer_time_end = format_time(result['end_time'])
+        else:
+            flash("Unable to find name or email of customer")
+
         # Decrement the current_bookings count in the time_slots table corresponding to the booking
         cursor.execute("""
             UPDATE time_slots
@@ -1293,6 +1392,9 @@ def delete_booking(booking_id):
         
         # If it was a success, indicate to user
         flash('Booking deleted successfully', 'success')
+        subject = 'Booking removed'
+        body = (f"Hi {customer_name},\n\n Your booking has been removed: {customer_day}, from {customer_time_start} to {customer_time_end}")
+        send_email(customer_email, subject, body)
         
     except Exception as e:
         # If there is any error, rollback and display error
