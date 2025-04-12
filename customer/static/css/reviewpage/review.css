@@ -11,6 +11,7 @@ body {
     margin: 50px auto;
     padding: 40px;
     border-radius: 15px;
+    margin-top: 180px;
 }
 
 .review-container h2,
@@ -36,7 +37,8 @@ form {
     direction: rtl; 
     display: flex;
     justify-content: flex-end; 
-    margin-bottom: 20px;
+    line-height: 1;
+    
 }
 
 /* Hide radio buttons */
@@ -70,6 +72,7 @@ textarea {
 }
 
 .submit-btn {
+
     background-color: #007bff;
     color: white;
     border: none;
@@ -80,6 +83,14 @@ textarea {
     transition: background-color 0.3s;
     display: block;
     margin-top: 10px;
+    margin-left: 220px;
+}
+
+
+.cancel-btn {
+    margin-left: 178px;
+    color: red;
+    font-size: 16px;
 }
 
 .submit-btn:hover {

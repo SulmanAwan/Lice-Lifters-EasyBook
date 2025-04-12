@@ -950,4 +950,5 @@ def submit_review():
     conn.commit()
     conn.close()
 
-    return render_template('reviewsuccess.html')
+    flash('Review submitted successfully!', 'success')
+    return redirect(url_for('customer.manage_appointments'))

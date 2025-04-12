@@ -17,7 +17,7 @@
         <input type="hidden" name="booking_id" value="{{ booking_id }}">
         <input type="hidden" name="customer_id" value="{{ customer_id }}">
 
-        <label>Rate your experience</label>
+        <label class="rating-label">Rate your experience</label>
         <div class="star-rating">
             <input type="radio" id="5-stars" name="rating" value="5" required><label for="5-stars">&#9733;</label>
             <input type="radio" id="4-stars" name="rating" value="4"><label for="4-stars">&#9733;</label>
@@ -26,11 +26,15 @@
             <input type="radio" id="1-star" name="rating" value="1"><label for="1-star">&#9733;</label>
         </div>
 
-        <label for="review_text">Describe your experience (Optional)</label>
+        <label for="review_text" class="review-text">Describe your experience (Optional)</label>
         <textarea name="review_text" id="review_text" placeholder="Your feedback..."></textarea>
 
         <button type="submit" class="submit-btn">Submit</button>
+        <br>
+        <a href="{{ url_for('customer.manage_appointments') }}" class="cancel-btn">Back to Manage Bookings</a>
     </form>
+
+    
 </div>
 {% endblock %}
 
