@@ -508,11 +508,6 @@ def online_payment():
     )
     return redirect(session.url, code=303)
 
-@customer.route('/manage_appointments', methods=['GET', 'POST'])
-def manage_appointments():
-
-    return render_template('manage_appointments.html') 
-
 @customer.route('/payment_cancel', methods=['GET'])
 def payment_cancel():
     # Get parameters from query string to render book_appointment page again
@@ -661,3 +656,187 @@ Your stripe transaction ID is: {payment_intent_id}
 
     # Redirect to manage appointments page so the customer can now see their current bookings and all their past bookings
     return redirect(url_for('customer.manage_appointments'))
+
+def update_appointment_statuses():
+    # We need to update the appointments database each time we enter the manage_bookings page
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Update the bookings table appointment status based on current date and time
+
+        # First check to ensure that all past bookings have the past status
+        cursor.execute("""
+            UPDATE bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            SET b.appointment_status = 'past'
+            WHERE b.appointment_status = 'current' 
+            AND CONCAT(ts.slot_date, ' ', ts.end_time) < NOW()
+        """)
+
+        # We also check to ensure that if any current bookings have been moved to the past then their status is changed
+        # We need to do this because the admin is allowed to modify bookings and if they change the date/time of a booking
+        # Such that it was upcoming previously and now it has a date/time that was in the past
+        cursor.execute("""
+            UPDATE bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            SET b.appointment_status = 'current'
+            WHERE b.appointment_status = 'past' 
+            AND CONCAT(ts.slot_date, ' ', ts.end_time) > NOW()
+        """)
+        # We commit changes to database
+        conn.commit()
+
+    except Exception as e:
+        # If error happened we alert user
+        print(f"Error updating appointment statuses: {str(e)}")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@customer.route('/manage_appointments', methods=['GET'])
+def manage_appointments():
+    # Update appointment statuses before displaying
+    update_appointment_statuses()
+    
+    # Get user_id from session
+    user_id = session.get('user_id')
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Fetch upcoming appointments and all the necessary data for displaying the booking on the page
+        cursor.execute("""
+            SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
+                   bt.type_name as service_type, pt.payment_method,
+                   pt.stripe_transaction_id as stripe_id
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE b.customer_id = %s 
+            AND b.appointment_status = 'current'
+            ORDER BY ts.slot_date ASC, ts.start_time ASC
+        """, (user_id,))
+        
+        upcoming_appointments = cursor.fetchall()
+        
+        # Fetch completed appointments and all the necessary data for displaying the booking on the page
+        cursor.execute("""
+            SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
+                   bt.type_name as service_type, pt.payment_method, pt.stripe_transaction_id as stripe_id,
+                   IFNULL(r.rating, 0) as rating, r.comment,
+                   CASE WHEN r.review_id IS NULL THEN 0 ELSE 1 END as has_review
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            LEFT JOIN reviews r ON b.booking_id = r.booking_id
+            WHERE b.customer_id = %s 
+            AND b.appointment_status = 'past'
+            ORDER BY ts.slot_date DESC, ts.start_time ASC
+        """, (user_id,))
+        
+        completed_appointments = cursor.fetchall()
+        
+        # format the necessary data appointments in the upcoming_appointments 
+        for appointment in upcoming_appointments:
+            # Format slot_date for display
+            appointment['slot_date'] = appointment['slot_date'].strftime('%A, %B %d, %Y')
+        
+            # Format start and end times for the booking
+            appointment['start_time'] = format_time(appointment['start_time'])
+            appointment['end_time'] = format_time(appointment['end_time'])
+        
+            # Format the payment method for display
+            if appointment['payment_method'] == 'in_store':
+                appointment['payment_method'] = 'In-store'
+            else:
+                appointment['payment_method'] = 'Online'
+
+        for appointment in completed_appointments:
+            # Format slot_date for display
+            appointment['slot_date'] = appointment['slot_date'].strftime('%A, %B %d, %Y')
+        
+            # Format start and end times for the booking
+            appointment['start_time'] = format_time(appointment['start_time'])
+            appointment['end_time'] = format_time(appointment['end_time'])
+            
+            # Format the payment method for display
+            if appointment['payment_method'] == 'in_store':
+                appointment['payment_method'] = 'In-store'
+            else:
+                appointment['payment_method'] = 'Online'
+                
+    except Exception as e:
+        # In case of error, display the error msg and return empty upcoming and completed appointment lists
+        flash(f'Error fetching appointments: {str(e)}', 'error')
+        upcoming_appointments = []
+        completed_appointments = []
+    
+    finally:
+        # Close cursor and booking
+        cursor.close()
+        conn.close()
+    
+    # Render the manage_appointments page with upcoming appointments and completed appointments information
+    return render_template('manage_appointments.html', 
+                          upcoming_appointments=upcoming_appointments, 
+                          completed_appointments=completed_appointments)
+
+
+@customer.route('/cancel_booking/<int:booking_id>', methods=['POST'])
+def cancel_booking(booking_id):
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get the slot record to be decremented alongside the booking record
+        cursor.execute("""
+            SELECT b.slot_id
+            FROM bookings b
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+        
+        booking = cursor.fetchone()
+        
+        # Decrement the current_bookings count in the time_slots table corresponding to the booking
+        cursor.execute("""
+            UPDATE time_slots
+            SET current_bookings = current_bookings - 1
+            WHERE slot_id = %s
+        """, (booking['slot_id'],))
+
+        # Set the appointment status to cancel for the booking
+        cursor.execute("""
+            UPDATE bookings
+            SET appointment_status = 'cancel'
+            WHERE booking_id = %s
+            """, (booking_id,))
+        
+        # Commit changes
+        conn.commit()
+        
+        # TODO: create email upon booking cancellation
+
+        # If it was a success, indicate to user
+        flash('Booking cancelled successfully', 'success')
+        
+    except Exception as e:
+        # If there is any error, rollback and display error
+        conn.rollback()
+        flash(f'Error cancelling booking: {str(e)}', 'error')
+        
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Re-render the manage_appointments page
+    return redirect(url_for('customer.manage_appointments'))
+
+@customer.route('/leave_review', methods=['GET', 'POST'])
+def leave_review():
+    return
