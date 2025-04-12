@@ -108,7 +108,7 @@
                         </div>
                     {% else %}
                         <div class="card-actions">
-                            <form method="GET" action="{{ url_for('customer.leave_review', booking_id=appointment.booking_id) }}">
+                            <form method="GET" action="{{ url_for('customer.review', booking_id=appointment.booking_id) }}">
                                 <button type="submit" class="review-btn">Leave Review</button>
                             </form>
                         </div>

@@ -725,7 +725,7 @@ def manage_appointments():
         
         # Fetch completed appointments and all the necessary data for displaying the booking on the page
         cursor.execute("""
-            SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
+                SELECT b.booking_id, ts.slot_date, ts.start_time, ts.end_time,
                    bt.type_name as service_type, pt.payment_method, pt.stripe_transaction_id as stripe_id,
                    IFNULL(r.rating, 0) as rating, r.comment,
                    CASE WHEN r.review_id IS NULL THEN 0 ELSE 1 END as has_review
@@ -891,6 +891,63 @@ Appointment Details:
     # Re-render the manage_appointments page
     return redirect(url_for('customer.manage_appointments'))
 
-@customer.route('/leave_review', methods=['GET', 'POST'])
-def leave_review():
-    return
+@customer.route('/review/<int:booking_id>', methods=['GET'])
+def review(booking_id):
+    customer_id = session.get('user_id')
+
+    if not booking_id or not customer_id:
+        flash('Missing booking or customer information.', 'error')
+        return redirect(url_for('customer.manage_appointments'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT ts.slot_date
+        FROM bookings b
+        JOIN time_slots ts ON b.slot_id = ts.slot_id
+        WHERE b.booking_id = %s
+    """, (booking_id,))
+    appointment = cursor.fetchone()
+    conn.close()
+
+    if appointment:
+        appointment_date = appointment[0].strftime('%A, %B %d, %Y')
+    else:
+        appointment_date = "Date not found"
+
+    return render_template('review.html',
+                           booking_id=booking_id,
+                           customer_id=customer_id,
+                           appointment_date=appointment_date)
+
+@customer.route('/submit_review', methods=['POST'])
+def submit_review():
+    booking_id = request.form['booking_id']
+    customer_id = request.form['customer_id']
+    rating = request.form['rating']
+    review_text = request.form['review_text']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Check for existing review
+    cursor.execute("""
+        SELECT * FROM reviews WHERE booking_id = %s AND customer_id = %s
+    """, (booking_id, customer_id))
+    existing_review = cursor.fetchone()
+
+    if existing_review:
+        conn.close()
+        flash('You have already submitted a review for this appointment.', 'info')
+        return redirect(url_for('customer.manage_appointments'))
+
+    # Insert the new review
+    cursor.execute("""
+        INSERT INTO reviews (booking_id, customer_id, rating, comment)
+        VALUES (%s, %s, %s, %s)
+    """, (booking_id, customer_id, rating, review_text))
+    conn.commit()
+    conn.close()
+
+    return render_template('reviewsuccess.html')
