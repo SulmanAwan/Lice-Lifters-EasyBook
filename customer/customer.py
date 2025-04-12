@@ -626,15 +626,11 @@ Your stripe transaction ID is: {payment_intent_id}
     # Redirect to manage appointments page so the customer can now see their current bookings and all their past bookings
     return redirect(url_for('customer.manage_appointments'))
 
-# Serves to provide a reminder of incoming appointment for customer (used at start of new day being midnight)
+# Serves to provide a reminder of incoming appointment for customer
 # Triggers automatically on the start of a new day (while this file is active)
-# Occurs once a day before the appointment(s)
 @customer.route('/appointment_reminder', methods=['POST'])
 def appointment_reminder():
-    # Stores all appointments reminded before for customer
-    reminded_appointments = []
-    # Stores all appointments to be email to customer.
-    # Will always remain empty in the end.
+    # Stores all appointments to be email to customers.
     remind_today_appointments_of_customers = {}
     Upcoming_appointment_day = datetime.datetime.today().date() + datetime.timedelta(days=1)
     try:
@@ -642,7 +638,7 @@ def appointment_reminder():
         cursor = conn.cursor(dictionary=True)
         # Query for all appointments from all customers and get needed information to send email
         cursor.execute("""
-        SELECT name, email, booking_id, user_id, slot_date
+        SELECT name, email, booking_id, user_id, slot_date, start_time
         FROM bookings 
         JOIN time_slots ON bookings.slot_id = time_slots.slot_id
         JOIN users ON users.user_id = bookings.customer_id
@@ -654,37 +650,39 @@ def appointment_reminder():
         for appointment in appointments_data:
             if Upcoming_appointment_day == appointment['slot_date']:
                 user_id = appointment['user_id']
-                if appointment not in reminded_appointments:
-                    reminded_appointments.append(appointment['slot_date'])
+                # Start_time is made like this so that the combine function works.
+                start_time = (datetime.datetime(1, 1, 1, 0, 0) + appointment['start_time']).time()
+                appointment_full_date_time = datetime.datetime.combine(appointment['slot_date'], start_time)
+                if user_id not in remind_today_appointments_of_customers:
                     remind_today_appointments_of_customers[user_id] = {
                     'name' : appointment['name'],
                     'email' : appointment['email'],
                     'appointments' : []
                     }
-                    remind_today_appointments_of_customers[user_id]['appointments'].append(appointment['slot_date'])
+                remind_today_appointments_of_customers[user_id]['appointments'].append(appointment_full_date_time)
+
         # Send email to customer(s) of upcoming appointments
-        for customer_info in remind_today_appointments_of_customers.items():
+        for customer_info in remind_today_appointments_of_customers.values():
             msg = Message('Email notification of upcoming appointment tomorrow', recipients = [customer_info['email']])
-            msg.body = (f"\n\n Hello {customer_info['name']}, you have the following appointment(s) coming up tomorrow:" \
-                "\n" .join([f'Appointments: {appointment_date.strftime('%A, %B %d at %I:%M %p')}' for appointment_date in customer_info['appointments']]))
+            msg.body = (f""" Hello {customer_info['name']}, you have the following appointment(s) coming up tomorrow:
+            {'\n' .join([f'{appointment_date.strftime("%A, %B %d at %I:%M %p")}' for appointment_date in customer_info['appointments']])}""")
             mail.send(msg)
-    
+            
     except Exception as e:
         # Catches error and does the following
         print(f'Error in sending notification: {str(e)}', 'error')
     finally:
         cursor.close()
         conn.close()
-
-    # Used to clear out all values in dictionary
-    remind_today_appointments_of_customers.clear()
+        # Used to clear out all values in dictionary
+        remind_today_appointments_of_customers.clear()
 
 def reminder_trigger():
     while True:
-        current_time = datetime.now()
+        current_time = datetime.datetime.now()
         next_midnight = (current_time + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        wait_seconds = (next_midnight - current_time).total_seconds()
-        time.sleep(wait_seconds)
+        wait_till_trigger = (next_midnight - current_time).total_seconds()
+        time.sleep(wait_till_trigger)
         try:
             appointment_reminder()
         except Exception as e:
