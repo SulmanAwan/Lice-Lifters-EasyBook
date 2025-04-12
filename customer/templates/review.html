@@ -10,24 +10,31 @@
 
 {% block content %}
 <div class="review-container">
-    <h2>Rate Appointment</h2>
+    <h2 id = "title">Rate Appointment</h2>
     <p class="date">{{ appointment_date }}</p>
 
     <form action="{{ url_for('customer.submit_review') }}" method="POST">
         <input type="hidden" name="booking_id" value="{{ booking_id }}">
         <input type="hidden" name="customer_id" value="{{ customer_id }}">
 
-        <label class="rating-label">Rate your experience</label>
-        <div class="star-rating">
-            <input type="radio" id="5-stars" name="rating" value="5" required><label for="5-stars">&#9733;</label>
-            <input type="radio" id="4-stars" name="rating" value="4"><label for="4-stars">&#9733;</label>
-            <input type="radio" id="3-stars" name="rating" value="3"><label for="3-stars">&#9733;</label>
-            <input type="radio" id="2-stars" name="rating" value="2"><label for="2-stars">&#9733;</label>
-            <input type="radio" id="1-star" name="rating" value="1"><label for="1-star">&#9733;</label>
+        <div class="rating-container">
+            <label class="rating-label">Rate your experience</label>
+            <div class="star-rating">
+                <input type="radio" id="5-stars" name="rating" value="5" required><label for="5-stars">&#9733;</label>
+                <input type="radio" id="4-stars" name="rating" value="4"><label for="4-stars">&#9733;</label>
+                <input type="radio" id="3-stars" name="rating" value="3"><label for="3-stars">&#9733;</label>
+                <input type="radio" id="2-stars" name="rating" value="2"><label for="2-stars">&#9733;</label>
+                <input type="radio" id="1-star" name="rating" value="1"><label for="1-star">&#9733;</label>
+            </div>
         </div>
+        
 
-        <label for="review_text" class="review-text">Describe your experience (Optional)</label>
-        <textarea name="review_text" id="review_text" placeholder="Your feedback..."></textarea>
+        <div class="review-text-container">
+            <label for="review_text" class="review-text">Describe your experience (Optional)</label>
+            <textarea name="review_text" id="review_text" placeholder="Your feedback..."></textarea>
+        </div>
+       
+    
 
         <button type="submit" class="submit-btn">Submit</button>
         <br>
