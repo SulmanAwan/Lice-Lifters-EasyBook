@@ -7,6 +7,7 @@ from extensions import mail
 from flask_mail import Message
 from dotenv import load_dotenv
 import os
+import time
 
 customer = Blueprint('customer', __name__, template_folder='templates', static_folder='static')
 
@@ -624,3 +625,67 @@ Your stripe transaction ID is: {payment_intent_id}
 
     # Redirect to manage appointments page so the customer can now see their current bookings and all their past bookings
     return redirect(url_for('customer.manage_appointments'))
+
+# Serves to provide a reminder of incoming appointment for customer (used at start of new day being midnight)
+# Triggers automatically on the start of a new day (while this file is active)
+# Occurs once a day before the appointment(s)
+@customer.route('/appointment_reminder', methods=['POST'])
+def appointment_reminder():
+    # Stores all appointments reminded before for customer
+    reminded_appointments = []
+    # Stores all appointments to be email to customer.
+    # Will always remain empty in the end.
+    remind_today_appointments_of_customers = {}
+    Upcoming_appointment_day = datetime.datetime.today().date() + datetime.timedelta(days=1)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        # Query for all appointments from all customers and get needed information to send email
+        cursor.execute("""
+        SELECT name, email, booking_id, user_id, slot_date
+        FROM bookings 
+        JOIN time_slots ON bookings.slot_id = time_slots.slot_id
+        JOIN users ON users.user_id = bookings.customer_id
+        WHERE appointment_status = 'current'
+        """)
+        appointments_data = cursor.fetchall()
+    
+        # Goes through all appointments from query to find appointments to notify customers
+        for appointment in appointments_data:
+            if Upcoming_appointment_day == appointment['slot_date']:
+                user_id = appointment['user_id']
+                if appointment not in reminded_appointments:
+                    reminded_appointments.append(appointment['slot_date'])
+                    remind_today_appointments_of_customers[user_id] = {
+                    'name' : appointment['name'],
+                    'email' : appointment['email'],
+                    'appointments' : []
+                    }
+                    remind_today_appointments_of_customers[user_id]['appointments'].append(appointment['slot_date'])
+        # Send email to customer(s) of upcoming appointments
+        for customer_id, customer_data in remind_today_appointments_of_customers.items():
+            msg = Message('Email notification of upcoming appointment tomorrow', recipients = [customer_data['email']])
+            msg.body = (f"\n\n Hello {customer_data['name']}, you have the following appointment(s) coming up tomorrow:" \
+                "\n" .join([f'Appointments: {appointment.strftime('%A, %B %d at %I:%M %p')}' for appointment in customer_data['appointments']]))
+            mail.send(msg)
+    
+    except Exception as e:
+        # Catches error and does the following
+        print(f'Error in sending notification: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Used to clear out all values in dictionary
+    remind_today_appointments_of_customers.clear()
+
+def reminder_trigger():
+    while True:
+        current_time = datetime.now()
+        next_midnight = (current_time + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        wait_seconds = (next_midnight - current_time).total_seconds()
+        time.sleep(wait_seconds)
+        try:
+            appointment_reminder()
+        except Exception as e:
+            print(f"An error occurred trying to send appointment reminders: {e}")
