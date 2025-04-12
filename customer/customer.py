@@ -663,10 +663,10 @@ def appointment_reminder():
                     }
                     remind_today_appointments_of_customers[user_id]['appointments'].append(appointment['slot_date'])
         # Send email to customer(s) of upcoming appointments
-        for customer_id, customer_data in remind_today_appointments_of_customers.items():
-            msg = Message('Email notification of upcoming appointment tomorrow', recipients = [customer_data['email']])
-            msg.body = (f"\n\n Hello {customer_data['name']}, you have the following appointment(s) coming up tomorrow:" \
-                "\n" .join([f'Appointments: {appointment.strftime('%A, %B %d at %I:%M %p')}' for appointment in customer_data['appointments']]))
+        for customer_info in remind_today_appointments_of_customers.items():
+            msg = Message('Email notification of upcoming appointment tomorrow', recipients = [customer_info['email']])
+            msg.body = (f"\n\n Hello {customer_info['name']}, you have the following appointment(s) coming up tomorrow:" \
+                "\n" .join([f'Appointments: {appointment_date.strftime('%A, %B %d at %I:%M %p')}' for appointment_date in customer_info['appointments']]))
             mail.send(msg)
     
     except Exception as e:
