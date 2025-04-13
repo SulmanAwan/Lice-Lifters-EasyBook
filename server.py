@@ -8,7 +8,6 @@ from customer.customer import customer, reminder_trigger
 # Imported to allow threading to happen and imported a method above from customer to allow the method to run here
 from threading import Thread
 
-
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SECRET_KEY'] = 'secretkey'
 
@@ -45,4 +44,6 @@ if __name__ == '__main__':
     # Place before app.run to have it start first, if app.run is placed before it then it won't run
     reminder_thread.daemon = True
     reminder_thread.start()
-    app.run(debug=True)
+    # Use_reloader= false is needed to make sure it only starts once instead of twice since it was run
+    # in development mode which is why it runs twice.
+    app.run(debug=True, use_reloader=False)
