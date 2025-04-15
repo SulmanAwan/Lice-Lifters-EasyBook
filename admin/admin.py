@@ -1322,6 +1322,9 @@ def delete_booking(booking_id):
         """, (booking_id,))
         
         booking = cursor.fetchone()
+
+        # Delete any review if it exists for this booking, this is required so it doesn't yield a foreign key error
+        cursor.execute("DELETE FROM reviews WHERE booking_id = %s", (booking_id,))
         
         # Decrement the current_bookings count in the time_slots table corresponding to the booking
         cursor.execute("""
