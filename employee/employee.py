@@ -548,6 +548,10 @@ def get_bookings_for_date(date, start_time, end_time):
 @employee.route('/shift_change/<display_date>/<current_year>/<shift_id>', methods=['GET', 'POST'])
 def shift_change(display_date, current_year, shift_id):
     
+    if shift_id == 'none':
+            flash("You don't have a shift on this day", 'warning')
+            return redirect(url_for('employee.employee_homepage'))
+
     # For post requests we need to insert the change request into the database so it comes into admin inbox
     if request.method == 'POST':
         # We get form data
