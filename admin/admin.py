@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from db import get_db_connection
 import calendar
 import datetime
-
+from extensions import mail, Message
 admin = Blueprint('admin', __name__, template_folder='templates', static_folder='static')
 
 ############## Notes for using datetime module ###############
@@ -676,12 +676,35 @@ def mark_as_read(request_id):
     # Going to alert user if it is a succcess or if any error occur
 
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     
     try:
         # Update the read_status in the shift_change_requests table for the request_id passed into the route
         cursor.execute("UPDATE shift_change_requests SET read_status = TRUE WHERE request_id = %s", 
                       (request_id,))
+        #gets email of the employee who made the request
+        cursor.execute("""
+            SELECT u.email
+            FROM shift_change_requests r
+            JOIN shifts s ON r.shift_id = s.shift_id
+            JOIN users u ON r.employee_id = u.user_id
+            WHERE r.request_id = %s
+        """, (request_id,))
+        
+        employee = cursor.fetchone()
+
+        if employee and employee['email']:
+            msg = Message(
+                subject="Shift Change Request Acknowledged",
+                recipients=[employee['email']]
+            )
+            msg.body = "Hello your shift change request has been acknowledged by the admin.\n\nThank you."
+
+            try:
+                mail.send(msg)
+                print(f"Email Sent")
+            except Exception as e:
+                print(f"Failed to send email: {e}")
         
         # commit the change and alert user of success
         conn.commit()
