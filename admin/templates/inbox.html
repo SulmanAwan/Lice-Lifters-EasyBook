@@ -20,39 +20,91 @@
         </div>
     </div>
 
-    <div class="inbox-container">
-        {% for request in requests %}
-        <div class="message-container">
-            <div class="blue"></div>
-            <div class="request">
-                <div class="field-row">
-                    <div class="label">Employee Name: </div>
-                    <div class="value">{{ request['name'] }}</div>
+    <div class = "inbox-container">
+        {% if requests %}
+        <div class="card-container">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Requests</h2>
                 </div>
-                <div class="field-row">
-                    <div class="label">Change Type: </div>
-                    <div class="value">{{ request['request_type'] }}</div>
+                <div class="request-list">
+                    {% for request in requests %}
+                    <div class="request-item {% if request['request_id']|string == current_request_id|string %}active{% endif %}">
+                        <div class="indicator"></div>
+                        <div class="request-preview">
+                            <a href="{{ url_for('admin.inbox', request_id=request['request_id']) }}" class="request-link">
+                                <div class="request-name">{{ request['name'] }}</div>
+                                <div class="request-type">
+                                    {% if request['request_type'] == 'swap' %}
+                                        Swap Shift
+                                    {% elif request['request_type'] == 'cancel' %}
+                                        Cancel Shift
+                                    {% elif request['request_type'] == 'change_hours' %}
+                                        Change Shift Hours
+                                    {% else %}
+                                        Other
+                                    {% endif %}
+                                </div>
+                                <div class="request-date">{{ request['shift_date'] }}</div>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                <div class="field-row">
-                    <div class="label">Shift Date: </div>
-                    <div class="value">{{ request['shift_date'] }}</div>
+            </div>
+            
+            <div class="details-panel">
+                {% if current_request %}
+                <div class="request-details">
+                    <div class="details-header">
+                        <h2>Request Details</h2>
+                    </div>
+                    <div class="details-content">
+                        <div class="field-row">
+                            <div class="label">Employee Name:</div>
+                            <div class="value">{{ current_request['name'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Change Type:</div>
+                            <div class="value">
+                                {% if current_request['request_type'] == 'swap' %}
+                                    Swap Shift
+                                {% elif current_request['request_type'] == 'cancel' %}
+                                    Cancel Shift
+                                {% elif current_request['request_type'] == 'change_hours' %}
+                                    Change Shift Hours
+                                {% else %}
+                                    Other
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Shift Date:</div>
+                            <div class="value">{{ current_request['shift_date'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Shift Time:</div>
+                            <div class="value">{{ current_request['start_time'] }} - {{ current_request['end_time'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label-change">Reason for Change:</div>
+                            <div class="reason-box">{{ current_request['reason'] }}</div>
+                        </div>
+                        
+                        <form action="{{ url_for('admin.mark_as_read', request_id=current_request['request_id']) }}" method="post" class="field-button">
+                            <button type="submit" id="read">
+                                Mark as read
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="field-row">
-                    <div class="label">Shift Time: </div>
-                    <div class="value">{{ request['start_time'] }} - {{ request['end_time'] }}</div>
-                </div>
-                <div class="field-row">
-                    <div class="label">Reason for Change: </div>
-                    <div class="reason-box">{{ request['reason'] }}</div>
-                </div> 
-
-                <form action="{{ url_for('admin.mark_as_read', request_id=request['request_id']) }}" method="post" class="field-button">
-                    <button type="submit" id="read">
-                        Mark as read
-                    </button>
-                </form>
+                {% else %}
+                    <div class = "no-requests">There are no shift change requests.</div>
+                {% endif %}
             </div>
         </div>
-        {% endfor %}
+        {% else %}
+            <div class="no-requests">There are no requests to display.</div>
+        {% endif %}
     </div>
 {% endblock %}

@@ -1,20 +1,14 @@
-.blue{
-    background-color: #2993FE;
-    height: 100%;
-    height: auto;
-    width: 3vh;
-}
-
 .field-row{
     display: flex;
     margin-bottom: 5vh;
-    align-items: flex-start;
+
 }
 
 .field-button{
     display: flex;
     margin-bottom: 1vh;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
 }
 
 .label{
@@ -24,8 +18,18 @@
     font-style: normal;
     font-weight: 700;
     margin-right: 2vh;
+    width: 200px;
+    flex-shrink: 0; 
+}
 
-    width: 180px;
+.label-change{
+    text-align: left;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    margin-right: 2vh;
+    width: 200px;
     flex-shrink: 0; 
 }
 
@@ -44,4 +48,124 @@
     height: 100%;
 
     margin-left: 2vh;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #333;
+}
+
+.request-link{
+    text-decoration: none;
+    color: black;
+}
+
+.request-list {
+    overflow-y: auto;
+    max-height: 68vh;
+}
+
+.request-item {
+    display: flex;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+
+.request-item:hover {
+    background-color: #f0f4f8;
+}
+
+.request-item.active {
+    background-color: #e1e9f1;
+}
+
+.indicator {
+    width: 4px;
+    background-color: #2993FE;
+    margin-right: 15px;
+    border-radius: 2px;
+    text-decoration: none;
+}
+
+.request-preview {
+    flex: 1;
+}
+
+.request-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    text-decoration: none;
+}
+
+.request-type {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+    text-decoration: none;
+}
+
+.request-date {
+    font-size: 14px;
+    color: #666;
+    text-decoration: none;
+}
+
+.details-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f9fafb;
+}
+
+.details-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #333;
+}
+
+.details-content {
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.reason-box {
+    border-radius: 12px;
+    width: 100%;
+    min-height: 100px;
+    height: auto;
+    border: 1px solid #e0e0e0;
+    background: #FFF;
+    padding: 15px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-height: 2vh;
+    overflow: auto;
+    font-size: 18px;
+    line-height: 1.5;
+    font-family: "Delval Galanogrotesque", sans-serif;
+}
+
+.no-requests{
+    font-size: 20px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    padding: 20px;
+    width: 177vh;
+    text-align: center;
+    color: #555;
+    font-size: 16px;
+    margin-top: 10px;
+    margin-left: 10vh;
+    justify-content: center;
 }

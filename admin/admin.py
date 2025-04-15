@@ -618,7 +618,10 @@ def inbox():
     # Going to show messages in order of date
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-
+    
+    # Get the selected request ID from URL parameters
+    request_id = request.args.get('request_id')
+    
     try:
         # Get all columns of data required to show the change requests
         cursor.execute("""
@@ -633,22 +636,39 @@ def inbox():
         requests = cursor.fetchall()
 
         # For each request we need to format the shift time and shift date so we can display it in a better way on the page
-        for request in requests:
-            request['start_time'] = format_time(request['start_time'])
-            request['end_time'] = format_time(request['end_time'])
-            request['shift_date'] = request['shift_date'].strftime('%B %d, %Y')
+        for req in requests:
+            req['start_time'] = format_time(req['start_time'])
+            req['end_time'] = format_time(req['end_time'])
+            req['shift_date'] = req['shift_date'].strftime('%B %d, %Y')
+        
+        # This is handling when the admin cliks on the inbox, that the first request_id is being selected 
+        # as no request_id is passed in
+        if not request_id and requests:
+            request_id = requests[0]['request_id']
+
+        # This is to initialize the current_request variable to None
+        current_request = None
+        # This is the request_id that has been defaulted to previously
+        if request_id:
+            # This is being used to create a list where requests where the ID matches our request_id, some type matching is done
+            matching_requests = [req for req in requests if str(req['request_id']) == str(request_id)]
+            # If there are any matching requests, we set the current_request to only one in the list
+            if matching_requests:
+                current_request = matching_requests[0]
 
     except Exception as e:
         # Alert user of any error and render the page without requests in the case of error
         flash(f'Error fetching inbox messages: {str(e)}', 'error')
+        # Set the current_request to None and requests to an empty list in case of error
         requests = []
+        current_request = None
     finally:
         # close cursor and database connection
         cursor.close()
         conn.close()
 
-    # Render the inbox page with the requests
-    return render_template('inbox.html', requests=requests)
+    # Render the inbox page with all shift change requests and the current_request that it is on
+    return render_template('inbox.html', requests=requests, current_request=current_request, current_request_id=request_id)
 
 @admin.route('/mark_as_read/<int:request_id>', methods=['POST'])
 def mark_as_read(request_id):

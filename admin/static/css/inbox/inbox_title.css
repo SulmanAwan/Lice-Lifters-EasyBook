@@ -77,8 +77,8 @@
     font-weight: 800;
     line-height: normal;
     text-decoration: none;
+    cursor: pointer;
 }
-
 
 #back:hover {
     background-color: #ff0000;

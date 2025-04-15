@@ -1,42 +1,36 @@
-.title-action-container{
+.title-action-container {
     display: flex;
     justify-content: center;
+    margin-bottom: 3vh;
+
 }
 
-.inbox-container{
+.card-container {
     display: flex;
-    min-height: 60vh;
-    height: auto;
+    background-color: white;
+    border-radius: 12px;
+    margin: 0 4vh 6vh 4vh;
+    max-height: 70vh;
+    justify-content: center;
+    margin-left: 8vh;
+    margin-right: 8vh;
+    display:100%;
+    margin-top: 4vh;
+}
+
+.sidebar {
+    width: 30%;
+    border-right: 1px solid #e0e0e0;
+    background-color: #f9fafb;
+    display: flex;
     flex-direction: column;
-    margin-top: 20px;
-    margin-left: 9vh;
-    margin-right: 9vh;
-    margin-bottom: 6vh;
-    gap: 6vh;
+    max-height: 50vh;
     overflow-y: auto;
-    max-height: 60vh;
 }
 
-.message-container{
+.details-panel {
+    width: 70%;
+    padding: 0;
     display: flex;
-    flex-direction: row;
-    height: auto;
-    width: 100%;
-}
-
-.reason-box {
-    border-radius: 20px;
-    width: 503px;
-    min-height: 100px;
-    height: auto;
-    margin-top: 5px;
-    
-    border: 1px solid #000;
-    background: #FFF;
-    padding: 10px;
-    
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-    overflow: auto; 
+    flex-direction: column;
 }
