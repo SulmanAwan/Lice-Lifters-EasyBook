@@ -684,7 +684,7 @@ def mark_as_read(request_id):
                       (request_id,))
         #gets email of the employee who made the request
         cursor.execute("""
-            SELECT u.email
+            SELECT u.email, s.shift_date
             FROM shift_change_requests r
             JOIN shifts s ON r.shift_id = s.shift_id
             JOIN users u ON r.employee_id = u.user_id
@@ -693,12 +693,14 @@ def mark_as_read(request_id):
         
         employee = cursor.fetchone()
 
+        display_date = employee['shift_date'].strftime('%A, %B %d')
+
         if employee and employee['email']:
             msg = Message(
                 subject="Shift Change Request Acknowledged",
                 recipients=[employee['email']]
             )
-            msg.body = "Hello your shift change request has been acknowledged by the admin.\n\nThank you."
+            msg.body = f"Hello your shift change request on { display_date } has been acknowledged by the admin.\n\nThank you."
 
             try:
                 mail.send(msg)
