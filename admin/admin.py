@@ -1115,7 +1115,7 @@ def modify_bookings(booking_id):
     try:
         # Fetch the booking details from database using booking_id
         cursor.execute("""
-            SELECT b.booking_id, b.customer_id, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
+            SELECT b.booking_id, b.customer_id, u.email, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
                    u.name as customer_name, bt.type_name as service_type, bt.price,
                    pt.payment_method, b.appointment_status, pt.amount,
                    pt.stripe_transaction_id as stripe_id
@@ -1243,6 +1243,22 @@ def modify_bookings(booking_id):
             # Commit all changes
             conn.commit()
 
+            email_date = booking['slot_date'].strftime('%A, %B %d')
+
+            msg = Message(
+                subject="Booking Modification",
+                recipients=[booking['email']]
+            )
+            msg.body = (f"Hello your booking originally on {email_date} from {current_timeslot['formatted_start_time']} - {current_timeslot['formatted_end_time']} has been modified.\n"
+                    f"Log into your account to view the modifications.\n\n"
+                    f"Thank You")
+
+            try:
+                mail.send(msg)
+                print(f"Email Sent")
+            except Exception as e:
+                print(f"Failed to send email: {e}")
+
 
             # If everything was succcesful then the update was valid and we alert that to the user
             flash('Booking updated successfully', 'success')
@@ -1322,16 +1338,40 @@ def delete_booking(booking_id):
         """, (booking_id,))
         
         booking = cursor.fetchone()
-
-        # Delete any review if it exists for this booking, this is required so it doesn't yield a foreign key error
-        cursor.execute("DELETE FROM reviews WHERE booking_id = %s", (booking_id,))
         
+        # Used to connect appointment to customer and done at this part before being updated
+        cursor.execute("""
+        SELECT b.booking_id, b.customer_id, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
+                u.name as customer_name, u.email, bt.type_name as service_type, bt.price,
+                pt.payment_method, b.appointment_status, pt.amount,
+                pt.stripe_transaction_id as stripe_id
+        FROM bookings b
+        JOIN time_slots ts ON b.slot_id = ts.slot_id
+        JOIN users u ON b.customer_id = u.user_id
+        JOIN booking_types bt ON b.type_id = bt.type_id
+        JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+        WHERE b.booking_id = %s
+        """, (booking_id,))
+        result = cursor.fetchone()
+        if result:
+            # Is used to locate specific customer to email and provide the day and time
+            customer_email = result['email']
+            customer_name = result['customer_name']
+            customer_day = result['slot_date'].strftime('%A, %B %d')
+            customer_time_start = format_time(result['start_time'])
+            customer_time_end = format_time(result['end_time'])
+        else:
+            flash("Unable to find name or email of customer")
+
         # Decrement the current_bookings count in the time_slots table corresponding to the booking
         cursor.execute("""
             UPDATE time_slots
             SET current_bookings = current_bookings - 1
             WHERE slot_id = %s
         """, (booking['slot_id'],))
+
+        # Delete any review if it exists for this booking, this is required so it doesn't yield a foreign key error
+        cursor.execute("DELETE FROM reviews WHERE booking_id = %s", (booking_id,))
 
         # Delete the booking record before the payment record since it has foreign key constraint
         cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
@@ -1344,6 +1384,9 @@ def delete_booking(booking_id):
         
         # If it was a success, indicate to user
         flash('Booking deleted successfully', 'success')
+        subject = 'Booking removed'
+        body = (f"Hi {customer_name},\n\n Your booking on {customer_day}, from {customer_time_start} - {customer_time_end} has been removed.")
+        send_email(customer_email, subject, body)
         
     except Exception as e:
         # If there is any error, rollback and display error
@@ -1356,6 +1399,16 @@ def delete_booking(booking_id):
     
     # Re-render the manage_bookings page
     return redirect(url_for('admin.manage_bookings'))
+
+# Method to send email
+def send_email(to, subject, body):
+    msg = Message(subject=subject,
+                  recipients=[to],  # Recipient emails
+                  body=body)  # The content of the email
+    try:
+        mail.send(msg)  # Sends email
+    except Exception as e:
+        flash(f'Unable to send email: {str(e)}', 'error')
 
 @admin.route('/manage_timeslots/<selected_date>', methods=['GET'])
 def manage_timeslots(selected_date):
