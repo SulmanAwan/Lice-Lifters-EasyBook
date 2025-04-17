@@ -595,3 +595,29 @@ def shift_change(display_date, current_year, shift_id):
 
     # In the case of a GET request we render the page with the required data
     return render_template('shift_change.html', display_date=display_date, current_year=current_year, shift_id=shift_id)
+
+@employee.route('/message', methods=['GET', 'POST'])
+def message():
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Gets all emails employee can message to
+        cursor.execute("""
+            SELECT email
+            FROM users
+            WHERE () = 'admin'
+        """)
+        admin_emails = cursor.fetchall()
+
+    except Exception as e:
+        # In case of error, we flash error msg to user
+        flash(f'Error generating timeslots: {str(e)}', 'error')
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Updates itself when sending messages (Delete later: Not yet done)
+    return render_template('employee_message.html')

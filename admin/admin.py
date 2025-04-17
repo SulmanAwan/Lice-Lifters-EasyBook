@@ -641,7 +641,7 @@ def inbox():
             req['end_time'] = format_time(req['end_time'])
             req['shift_date'] = req['shift_date'].strftime('%B %d, %Y')
         
-        # This is handling when the admin cliks on the inbox, that the first request_id is being selected 
+        # This is handling when the admin clicks on the inbox, that the first request_id is being selected 
         # as no request_id is passed in
         if not request_id and requests:
             request_id = requests[0]['request_id']
@@ -666,7 +666,7 @@ def inbox():
         # close cursor and database connection
         cursor.close()
         conn.close()
-
+    
     # Render the inbox page with all shift change requests and the current_request that it is on
     return render_template('inbox.html', requests=requests, current_request=current_request, current_request_id=request_id)
 
@@ -1743,3 +1743,41 @@ def analytics_dashboard():
                             head_check_revenue=head_check_revenue,
                             avg_rating=avg_rating
                            )
+
+# Reminder to delete later that the inbox can redirect to messages and the messages uses the same table as the inbox
+@admin.route('/message', methods=['GET', 'POST'])
+def message():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Gets all emails admin can message to
+        cursor.execute("""
+            SELECT email
+            FROM users
+            WHERE () = 'admin' OR 'employee'
+        """)
+        admin_employee_emails = cursor.fetchall()
+
+
+
+        # Get all columns needed for both inbox and messages
+        cursor.execute("""
+            SELECT r.request_id, u.name, r.request_type, s.shift_date, s.start_time, s.end_time, r.reason, r.read_status
+            FROM shift_change_requests r 
+            JOIN shifts s ON r.shift_id = s.shift_id
+            JOIN users u ON r.employee_id = u.user_id
+            WHERE r.read_status = FALSE
+            ORDER BY s.shift_date ASC, s.start_time ASC
+        """)
+
+    except Exception as e:
+        # In case of error, we flash error msg to user
+        flash(f'Error generating timeslots: {str(e)}', 'error')
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Updates itself when sending messages (Delete later: Not yet done)
+    return render_template('admin_message.html')
