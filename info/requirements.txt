@@ -3,3 +3,4 @@ mysql-connector-python
 Flask-Mail
 stripe
 python-dotenv
+Flask-APScheduler

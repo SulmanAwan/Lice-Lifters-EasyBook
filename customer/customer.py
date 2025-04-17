@@ -983,3 +983,60 @@ def allowed_to_book(user_id):
         return False
     else:
         return True
+
+def send_appointment_reminders():
+    # Notification reminder method that runs upon app startup and once every day to send
+    # email notifications to customers who have appointments scheduled for the next day
+
+    # Calculate tomorrow's date (current date + 1 day)
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    tomorrow_str = tomorrow.strftime('%Y-%m-%d')
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try: 
+        # Query for appointments happening tomorrow 
+        cursor.execute("""
+            SELECT ts.slot_date, ts.start_time, ts.end_time,
+                    u.name, u.email
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN users u ON b.customer_id = u.user_id
+            WHERE ts.slot_date = %s
+            AND b.appointment_status = 'current'
+        """, (tomorrow_str,))
+        
+        appointments = cursor.fetchall()
+            
+        # For each appointment scheduled for tommorrow we will compose a email notification and send it.
+        for appointment in appointments:
+            # Format the date and timeslots to display in the email
+            date_str = appointment['slot_date'].strftime('%A, %B %d, %Y')
+            start_time_str = format_time(appointment['start_time'])
+            end_time_str = format_time(appointment['end_time'])
+            
+            # Generate the email to be sent
+            subject = "Appointment Reminder: Your Visit Tomorrow"
+            body = f"""
+    Hello {appointment['name']},
+
+    You have an appointment scheduled for tomorrow:
+
+    - Date: {date_str}
+    - Time: {start_time_str} - {end_time_str}
+
+    If you can't make it, please reschedule or cancel your appointment through the EasyBook website.
+    """
+            # Send the email to the customer
+            msg = Message(subject=subject, recipients=[appointment['email']], body=body)
+            mail.send(msg)
+                
+    except Exception as e:
+        # If an error occurs, display the error message
+        print(f"Error sending appointment reminders: {str(e)}")
+    
+    finally:
+        cursor.close()
+        conn.close()
