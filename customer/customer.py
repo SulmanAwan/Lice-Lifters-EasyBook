@@ -316,6 +316,10 @@ def book_appointment():
     slot_id = request.form['slot_id']
     user_id = session.get('user_id')    
 
+    if allowed_to_book(user_id) == False:
+        flash(f'You have reached the maximum limit of 3 bookings. Please complete or cancel existing appointments before making a new one.', 'warning')
+        return redirect(url_for('customer.manage_appointments'))
+
     # Connect to database
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -952,3 +956,30 @@ def submit_review():
 
     flash('Review submitted successfully!', 'success')
     return redirect(url_for('customer.manage_appointments'))
+
+def allowed_to_book(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Count the number of active bookings for the customer passed into the method
+        cursor.execute("""
+            SELECT COUNT(*) as booking_count
+            FROM bookings
+            WHERE customer_id = %s AND appointment_status = 'current'
+        """, (user_id,))
+        
+        result = cursor.fetchone()
+            
+    except Exception as e:
+        # In the case of an error, display the error message and return 0 active bookings
+        print(f"Error counting customer bookings: {str(e)}")
+        return 0
+    finally:
+        cursor.close()
+        conn.close()
+
+    if result['booking_count'] >= 3:
+        return False
+    else:
+        return True
