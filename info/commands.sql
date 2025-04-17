@@ -96,15 +96,6 @@ CREATE TABLE reviews (
     FOREIGN KEY (customer_id) REFERENCES users(user_id)
 );
 
--- Notifications table: Record of system notifications
-CREATE TABLE notifications (
-    notification_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
-
 -- Data that should be inserted for app to function properly:
 INSERT INTO booking_types (type_name, price)
 VALUES ('Lice Check', 40.00),('Lice Removal', 189.00);
