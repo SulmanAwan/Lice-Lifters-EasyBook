@@ -552,6 +552,52 @@ def shift_change(display_date, current_year, shift_id):
             flash("You don't have a shift on this day", 'warning')
             return redirect(url_for('employee.employee_homepage'))
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        # This will retrieve the shift_date, start_time, and end_time for the shift_id
+        cursor.execute(
+            """
+            SELECT shift_date, start_time, end_time
+            FROM shifts
+            WHERE shift_id = %s
+            """,
+            (shift_id,)
+        )
+        
+        shift_result = cursor.fetchone()
+        
+        # This gets us the current date so we can compare it with the shift_date
+        today = datetime.date.today()
+        
+        # This checks if the shift_date was a previous date
+        if shift_result['shift_date'] < today:
+            flash("Cannot request shift changes for past shifts", 'warning')
+            return redirect(url_for('employee.employee_homepage'))
+        
+        # This checks for the case that the shift_date is the current date
+        if shift_result['shift_date'] == today:
+            # This gives us the current date and time but as a datetime object
+            now = datetime.datetime.now()
+            # This converts the current time into a timedelta object so we can compare it with the shift end time
+            now_converted = datetime.timedelta(hours=now.hour, minutes=now.minute, seconds=now.second)
+            
+            # This checks if the current time is past the shift end time, if it is then we cannot request a shift change
+            if now_converted > shift_result['end_time']:
+                flash("Cannot request shift changes for past shift", 'warning')
+                return redirect(url_for('employee.employee_homepage'))
+
+    except Exception as e:
+        # If error occurs we alert the user and reload the page
+        flash('Error occurred while retrieving your shift information.', 'error')
+        return redirect(url_for('employee.employee_homepage'))
+
+    finally:
+        # Close the cursor and connection
+        cursor.close()
+        conn.close()
+
     # For post requests we need to insert the change request into the database so it comes into admin inbox
     if request.method == 'POST':
         # We get form data
