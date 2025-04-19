@@ -1744,7 +1744,10 @@ def analytics_dashboard():
                             avg_rating=avg_rating
                            )
 
-# Reminder to delete later that the inbox can redirect to messages and the messages uses the same table as the inbox
+# Reminder to delete later messages uses the same table as the inbox
+# Inbox can be redirect to messages and the email will automatically be selected to email drop down to be responded to
+# Email drop down and when selecting email in it will show subtject text box and body of text box to add message into
+# Includes a send button
 @admin.route('/message', methods=['GET', 'POST'])
 def message():
     try:
@@ -1755,10 +1758,11 @@ def message():
         cursor.execute("""
             SELECT email
             FROM users
-            WHERE () = 'admin' OR 'employee'
+            WHERE status = 'admin' OR 'employee'
         """)
         admin_employee_emails = cursor.fetchall()
 
+        #for user in admin_employee_emails:
 
 
         # Get all columns needed for both inbox and messages
@@ -1772,8 +1776,8 @@ def message():
         """)
 
     except Exception as e:
-        # In case of error, we flash error msg to user
-        flash(f'Error generating timeslots: {str(e)}', 'error')
+        # In case of error
+        flash(f'Error sending message: {str(e)}', 'error')
     
     finally:
         cursor.close()

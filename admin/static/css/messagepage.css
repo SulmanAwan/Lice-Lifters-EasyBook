@@ -1,9 +1,10 @@
-.emailheader{
+
+.messagetitle{
     font-size: 10px;
     font-family: "Delval Galanogrotesque", sans-serif;
+    font-weight: bold;
 }
 
-Adjust it to this page (delete this later)
 #back{
     display: flex;
     align-items: center;
@@ -35,4 +36,17 @@ Adjust it to this page (delete this later)
     background-color: #ff0000;
     transform: translateY(-5px);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.emailheader{
+    font-size: 10px;
+    font-family: "Delval Galanogrotesque", sans-serif;
+}
+
+.messagesubject{
+    font-size: 10px;
+}
+
+.messagebody{
+    font-size: 10px;
 }
