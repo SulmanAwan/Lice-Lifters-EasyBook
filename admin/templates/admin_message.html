@@ -1,16 +1,38 @@
 {% extends 'base.html' %}
 
+{% block extra_css %} 
+<link rel="stylesheet" type="text/css" href="{{ url_for('admin.static', filename='css/messagepage.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="actions">
-    <a href="{{ url_for('admin.admin_homepage') }}" id="back">Back</a>
+<div class="header">
+    <h1 class="messagetitle"> Message </h1>
+    <div class="actions">
+        <a href="{{ url_for('admin.admin_homepage') }}" class="back-btn">Back</a>
+    </div>
+</div>
+<hr class="dashline">
+
+<div class="dropdownemaillist">
+    <label for ="dropdownemaillist"> Select an email: </label>
+    {% if emailslist %}
+        <select id="dropdownemaillist" size="1">
+            <option value="" {% if not selected_email %}selected{% endif %}> None selected </option>
+        {% for email in emailslist %}
+            <option value="{{ email }}" {% if email == selected_email %}selected{% endif %}>{{ email }}</option>
+        {% endfor %}
+        </select>
+    {% endif %}
 </div>
 
-<div class="messagesubject"> 
-    <textarea> rows="10" cols="81" required</textarea>
-</div>
-<div class="messagebody">
-    <textarea> rows="10" cols="81" required</textarea>
-</div>
-
-<button type="submit" class="create-btn">Submit</button>
+<form action="{{ url_for('send_message') }}" method="POST">
+    <div class="messagesubject"> 
+        Subject: <textarea name='subject' rows="2" cols="80" required></textarea>
+    </div>
+    <div class="messagebody">
+        Body: <textarea name='body' rows="10" cols="100" required></textarea>
+    </div>
+    <button type="submit" class="send">Send Message</button>
+    </div>
+</form>
 {% endblock %}

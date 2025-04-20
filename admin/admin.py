@@ -625,7 +625,7 @@ def inbox():
     try:
         # Get all columns of data required to show the change requests
         cursor.execute("""
-            SELECT r.request_id, u.name, r.request_type, s.shift_date, s.start_time, s.end_time, r.reason, r.read_status
+            SELECT r.request_id, u.name, r.request_type, s.shift_date, s.start_time, s.end_time, r.reason, r.read_status, u.email
             FROM shift_change_requests r 
             JOIN shifts s ON r.shift_id = s.shift_id
             JOIN users u ON r.employee_id = u.user_id
@@ -1748,9 +1748,14 @@ def analytics_dashboard():
 # Inbox can be redirect to messages and the email will automatically be selected to email drop down to be responded to
 # Email drop down and when selecting email in it will show subtject text box and body of text box to add message into
 # Includes a send button
-@admin.route('/message', methods=['GET', 'POST'])
+@admin.route('/admin_message', methods=['GET', 'POST'])
 def message():
     try:
+        # This is for the email admin is responding to from inbox
+        selected_email = request.args.get('selected_email')
+        title = request.form.get('subject')
+        message = request.form.get('body')
+
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
@@ -1758,22 +1763,26 @@ def message():
         cursor.execute("""
             SELECT email
             FROM users
-            WHERE status = 'admin' OR 'employee'
+            WHERE users.permission = 'admin' OR users.permission = 'employee'
         """)
-        admin_employee_emails = cursor.fetchall()
+        emails = cursor.fetchall()
+        current_user_email = session.get('email')
+        emailslist = [row['email'] for row in emails if row['email'] != current_user_email]
 
-        #for user in admin_employee_emails:
-
-
-        # Get all columns needed for both inbox and messages
-        cursor.execute("""
-            SELECT r.request_id, u.name, r.request_type, s.shift_date, s.start_time, s.end_time, r.reason, r.read_status
-            FROM shift_change_requests r 
-            JOIN shifts s ON r.shift_id = s.shift_id
-            JOIN users u ON r.employee_id = u.user_id
-            WHERE r.read_status = FALSE
-            ORDER BY s.shift_date ASC, s.start_time ASC
-        """)
+        # For sending message and then storing the message
+        if request.method == 'POST':
+            if not title or not message or not selected_email:
+                flash('Please fill in all fields!')
+                return redirect(url_for('admin_message.html'))
+            else:
+                cursor.execute("""
+                INSERT INTO shift_change_requests 
+                (employee_id, shift_id, request_type, reason) 
+                VALUES (%s, %s, %s, %s)
+                """, 
+                (employee_id, shift_id, change_type, reason)
+                )
+                flash('Message submitted successfully', 'success')
 
     except Exception as e:
         # In case of error
@@ -1782,6 +1791,4 @@ def message():
     finally:
         cursor.close()
         conn.close()
-
-    # Updates itself when sending messages (Delete later: Not yet done)
-    return render_template('admin_message.html')
+    return render_template('admin_message.html', emailslist = emailslist, selected_email=selected_email)

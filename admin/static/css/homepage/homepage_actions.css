@@ -1,7 +1,6 @@
 .actions{
     display: flex;
-    
-    width: 15%;
+    width: 11%;
     margin-right: 10vh;
     gap: 4vh;
     justify-content: right;
