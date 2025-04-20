@@ -607,7 +607,7 @@ def message():
         cursor.execute("""
             SELECT email
             FROM users
-            WHERE () = 'admin'
+            WHERE permission = 'admin'
         """)
         admin_emails = cursor.fetchall()
 

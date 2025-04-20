@@ -14,3 +14,7 @@
     aspect-ratio: 1/1;
     margin-top: 3vh;
 }
+
+#message{
+    transform: scale(1.3);
+}
