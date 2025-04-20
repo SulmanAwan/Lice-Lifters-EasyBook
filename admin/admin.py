@@ -1744,14 +1744,12 @@ def analytics_dashboard():
                             avg_rating=avg_rating
                            )
 
-# Reminder to delete later messages uses the same table as the inbox
 # Inbox can be redirect to messages and the email will automatically be selected to email drop down to be responded to
-# Email drop down and when selecting email in it will show subtject text box and body of text box to add message into
-# Includes a send button
+# Sends message that has a subject and body to email
 @admin.route('/admin_message', methods=['GET', 'POST'])
 def message():
     try:
-        # This is for the email admin is responding to from inbox
+        # This is for the email admin is responding to an email from inbox
         selected_email = request.args.get('selected_email')
         title = request.form.get('subject')
         message = request.form.get('body')
@@ -1759,13 +1757,18 @@ def message():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Gets all emails admin can message to
+        # Gets all possible emails admin can message to (excluding self)
         cursor.execute("""
             SELECT email
             FROM users
             WHERE users.permission = 'admin' OR users.permission = 'employee'
         """)
         emails = cursor.fetchall()
+
+        # Get user session information to do the following:
+        # Remove email user used to login in from potential emails to send
+        # Obtain user session id to fill into table
+        current_user_id = session.get('user_id')
         current_user_email = session.get('email')
         emailslist = [row['email'] for row in emails if row['email'] != current_user_email]
 
@@ -1775,12 +1778,13 @@ def message():
                 flash('Please fill in all fields!')
                 return redirect(url_for('admin_message.html'))
             else:
+                notification_id_count = notification_id_count + 1
                 cursor.execute("""
                 INSERT INTO shift_change_requests 
-                (employee_id, shift_id, request_type, reason) 
+                (notification_id, user, title, message) 
                 VALUES (%s, %s, %s, %s)
                 """, 
-                (employee_id, shift_id, change_type, reason)
+                (notification_id_count, current_user_id, title, message)
                 )
                 flash('Message submitted successfully', 'success')
 
