@@ -90,11 +90,13 @@
                             <div class="label-change">Reason for Change:</div>
                             <div class="reason-box">{{ current_request['reason'] }}</div>
                         </div>
-                        
                         <form action="{{ url_for('admin.mark_as_read', request_id=current_request['request_id']) }}" method="post" class="field-button">
                             <button type="submit" id="read">
                                 Mark as read
                             </button>
+                            <a href="{{ url_for('admin.send_message', email=current_request['email']) }}" id="msg">
+                                Send Message
+                            </a>
                         </form>
                     </div>
                 </div>

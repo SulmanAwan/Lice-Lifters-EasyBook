@@ -625,7 +625,7 @@ def inbox():
     try:
         # Get all columns of data required to show the change requests
         cursor.execute("""
-            SELECT r.request_id, u.name, r.request_type, s.shift_date, s.start_time, s.end_time, r.reason, r.read_status
+            SELECT r.request_id, u.name, r.request_type, s.shift_date, s.start_time, s.end_time, r.reason, r.read_status, u.email
             FROM shift_change_requests r 
             JOIN shifts s ON r.shift_id = s.shift_id
             JOIN users u ON r.employee_id = u.user_id
@@ -641,7 +641,7 @@ def inbox():
             req['end_time'] = format_time(req['end_time'])
             req['shift_date'] = req['shift_date'].strftime('%B %d, %Y')
         
-        # This is handling when the admin cliks on the inbox, that the first request_id is being selected 
+        # This is handling when the admin clicks on the inbox, that the first request_id is being selected 
         # as no request_id is passed in
         if not request_id and requests:
             request_id = requests[0]['request_id']
@@ -666,7 +666,7 @@ def inbox():
         # close cursor and database connection
         cursor.close()
         conn.close()
-
+    
     # Render the inbox page with all shift change requests and the current_request that it is on
     return render_template('inbox.html', requests=requests, current_request=current_request, current_request_id=request_id)
 
@@ -1743,3 +1743,86 @@ def analytics_dashboard():
                             head_check_revenue=head_check_revenue,
                             avg_rating=avg_rating
                            )
+
+@admin.route('/send_message', methods=['GET'])
+def send_message():
+    # Get the admin's email from session (we won't display their email in the dropdown menue)
+    admin_email = session.get('email')
+    # If the page was accessed by clicking the "Send Message" button from the user inbox page, then we will retrieve that requests email
+    recipient_email = request.args.get('email', '') 
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get all emails except the current admin email
+        cursor.execute("""SELECT user_id, name, email, permission 
+                       FROM users 
+                       WHERE email != %s 
+                       ORDER BY permission, name""", 
+                       (admin_email,))
+        
+        users = cursor.fetchall()
+
+    except Exception as e:
+        # In the case of an error, dipslay the error msg and return an empty list of user emails
+        flash(f'Error: {str(e)}', 'error')
+        users = []
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Render the send_message page with the list of users and the recipient email if provided via the inbox request
+    return render_template('admin_send_message.html', users=users, 
+                          recipient_email=recipient_email)
+
+@admin.route('/process_message', methods=['POST'])
+def process_message():
+    # Get the admin's email from session (we won't display their email in the dropdown menue)
+    admin_email = session.get('email')
+    # From the form get the recipient email, the subject, and the message
+    recipient = request.form.get('recipient')
+    subject = request.form.get('subject')
+    message_body = request.form.get('message')
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get the recipient's info
+        cursor.execute("SELECT name FROM users WHERE email = %s", (recipient,))
+        user = cursor.fetchone()
+        
+        # Compose the email msg with the subject, recipient, and body provided by the form
+        msg = Message(
+            subject=subject,
+            recipients=[recipient],
+            body=f"Hello {user['name']},\n\n{message_body}"
+        )
+        
+        # Send the email
+        mail.send(msg)
+
+                # Get all emails except the current admin email
+        cursor.execute("""SELECT user_id, name, email, permission 
+                       FROM users 
+                       WHERE email != %s 
+                       ORDER BY permission, name""", 
+                       (admin_email,))
+        
+        users = cursor.fetchall()
+        
+        # Upon a success, save a flash message with the success
+        flash('Message sent successfully!', 'success')
+    
+    except Exception as e:
+        # In case of error save a flash message with the error
+        flash(f'Error: {str(e)}', 'error')
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('admin_send_message.html', users=users, recipient_email=recipient)

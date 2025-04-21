@@ -1,10 +1,10 @@
 .actions{
     display: flex;
-    
-    width: 15%;
+    width: 11%;
     margin-right: 10vh;
     gap: 4vh;
     justify-content: right;
+    
 }
 
 .actions img{
@@ -13,4 +13,8 @@
     flex-shrink: 0;
     aspect-ratio: 1/1;
     margin-top: 3vh;
+}
+
+#message{
+    transform: scale(1.3);
 }
