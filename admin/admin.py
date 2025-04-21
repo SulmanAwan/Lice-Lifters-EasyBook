@@ -1652,6 +1652,14 @@ def analytics_dashboard():
         """)
     total_booking = cursor.fetchall()
 
+            # Query for total amount
+    cursor.execute("""
+        SELECT COUNT(booking_id) as total
+        FROM bookings
+        WHERE appointment_status != "cancel"
+        """)
+    booking_count = cursor.fetchall()[0]["total"]
+
         # Query for cancellation amount
     cursor.execute("""
         SELECT COUNT(appointment_status)
@@ -1762,6 +1770,7 @@ def analytics_dashboard():
         JOIN booking_types bt ON b.type_id = bt.type_id
         JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
         WHERE bt.type_name = 'lice check'
+        AND b.appointment_status != 'cancel'
     """)
     head_check_revenue = cursor.fetchone()['total_revenue'] or 0
 
@@ -1772,6 +1781,7 @@ def analytics_dashboard():
         JOIN booking_types bt ON b.type_id = bt.type_id
         JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
         WHERE bt.type_name = 'lice removal'
+        AND b.appointment_status != 'cancel'
     """)
     lice_removal_revenue = cursor.fetchone()['total_revenue'] or 0
 
@@ -1788,7 +1798,7 @@ def analytics_dashboard():
                            format_popular_start_time_slot=format_popular_start_time_slot, 
                            format_less_popular_start_time_slot=format_less_popular_start_time_slot,
                            format_less_popular_end_time_slot=format_less_popular_end_time_slot,
-                           total_amount=total_amount,
+                           booking_count=booking_count,
                            lice_removal_revenue=lice_removal_revenue,
                             head_check_revenue=head_check_revenue,
                             avg_rating=avg_rating
