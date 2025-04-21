@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from db import get_db_connection
 import calendar
 import datetime
+from extensions import mail, Message
 
 employee = Blueprint('employee', __name__, template_folder='templates', static_folder='static')
 
@@ -596,28 +597,84 @@ def shift_change(display_date, current_year, shift_id):
     # In the case of a GET request we render the page with the required data
     return render_template('shift_change.html', display_date=display_date, current_year=current_year, shift_id=shift_id)
 
-@employee.route('/message', methods=['GET', 'POST'])
-def message():
 
+@employee.route('/send_message', methods=['GET'])
+def send_message():
+    # Get the employee's email from session (we won't display their email in the dropdown menue)
+    employee_email = session.get('email')
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        # Gets all emails employee can message to
-        cursor.execute("""
-            SELECT email
-            FROM users
-            WHERE permission = 'admin'
-        """)
-        admin_emails = cursor.fetchall()
+        # Get all emails except the current employee's email
+        cursor.execute("""SELECT user_id, name, email, permission 
+                       FROM users 
+                       WHERE email != %s 
+                       AND permission != 'customer'
+                       ORDER BY permission, name""", 
+                       (employee_email,))
+        
+        users = cursor.fetchall()
 
     except Exception as e:
-        # In case of error, we flash error msg to user
-        flash(f'Error generating timeslots: {str(e)}', 'error')
+        # In the case of an error, dipslay the error msg and return an empty list of user emails
+        flash(f'Error: {str(e)}', 'error')
+        users = []
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # Render the send_message page with the list of users (admins +employees)
+    return render_template('employee_send_message.html', users=users)
+
+@employee.route('/process_message', methods=['POST'])
+def process_message():
+    # Get the employee's email from session (we won't display their email in the dropdown menue)
+    employee_email = session.get('email')
+    # From the form get the recipient email, the subject, and the message
+    recipient = request.form.get('recipient')
+    subject = request.form.get('subject')
+    message_body = request.form.get('message')
+    
+    # Connect to database
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Get the recipient's info
+        cursor.execute("SELECT name FROM users WHERE email = %s", (recipient,))
+        user = cursor.fetchone()
+        
+        # Compose the email msg with the subject, recipient, and body provided by the form
+        msg = Message(
+            subject=subject,
+            recipients=[recipient],
+            body=f"Hello {user['name']},\n\n{message_body}"
+        )
+        
+        # Send the email
+        mail.send(msg)
+
+        # Get all emails except the current employee's email
+        cursor.execute("""SELECT user_id, name, email, permission 
+                       FROM users 
+                       WHERE email != %s 
+                       AND permission != 'customer'
+                       ORDER BY permission, name""", 
+                       (employee_email,))
+        
+        users = cursor.fetchall()
+
+        # Upon a success, save a flash message with the success
+        flash('Message sent successfully!', 'success')
+    
+    except Exception as e:
+        # In case of error save a flash message with the error
+        flash(f'Error: {str(e)}', 'error')
     
     finally:
         cursor.close()
         conn.close()
 
-    # Updates itself when sending messages (Delete later: Not yet done)
-    return render_template('employee_message.html')
+    return render_template('employee_send_message.html', users=users)

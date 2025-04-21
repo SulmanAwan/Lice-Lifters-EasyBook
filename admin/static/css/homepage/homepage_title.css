@@ -5,7 +5,8 @@
     margin-left: 10.3vh;
     flex-direction: column;
     width: 75%;
-    
+    margin-right: 10vh;
+
 }
 
 .title h1{
@@ -17,7 +18,7 @@
     border: none;
     background-color: black;
     margin: 8px 0 20px 0; 
-    width: 93%;
+    width: 98%;
     border: 2px solid black;
 }
 
