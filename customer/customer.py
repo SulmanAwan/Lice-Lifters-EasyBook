@@ -829,6 +829,61 @@ def cancel_booking(booking_id):
             VALUES (%s, FALSE)
         """, (booking_id,))
 
+        # Get the slot record to be decremented alongside the booking record along with all booking details
+        cursor.execute("""
+            SELECT b.booking_id, b.slot_id, b.customer_id, b.appointment_status,
+                   ts.slot_date, ts.start_time, ts.end_time,
+                   u.name, u.email, bt.type_name, pt.amount, pt.payment_method,
+                   pt.stripe_transaction_id
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            JOIN users u ON b.customer_id = u.user_id
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+
+        booking = cursor.fetchone()
+
+        date_str = booking['slot_date'].strftime('%A, %B %d, %Y')
+        start_time_str = format_time(booking['start_time'])
+        end_time_str = format_time(booking['end_time'])
+        time_str = f"{start_time_str} - {end_time_str}"
+        
+        # Format payment method with the type of payment method that was selected
+        if booking['payment_method'] == 'in_store':
+            payment_method = "In-store"
+        else:
+            payment_method = "Online"
+
+        customer_email = booking['email']
+
+        # Format the transaction ID for the email, if it was a stripe transaction include it, if not then return empty string
+        stripe_id = booking.get('stripe_transaction_id')
+        if booking.get('payment_method') == 'stripe' and stripe_id:
+            transaction_id = f"- Stripe Transaction ID: {stripe_id}"
+        else:
+            transaction_id = ""
+
+        msg = Message("Appointment Cancellation Notification", recipients=[customer_email])
+        
+        # This is the creation of the email
+        msg.body = f"""Hello {booking['name']},
+Your appointment has been successfully cancelled.
+
+Appointment Details:
+
+- Service: {booking['type_name']}
+- Date: {date_str}
+- Time: {time_str}
+- Payment Method: {payment_method}
+- Amount: ${booking['amount']}
+{ transaction_id }
+"""
+        
+        # This will send the email to all admins
+        mail.send(msg)
+
         # Commit changes
         conn.commit()
         
