@@ -19,6 +19,9 @@
             <a href="{{ url_for('admin.admin_homepage') }}" id="back">Back</a>
         </div>
     </div>
+    {% for noti in notifications %}
+        {{  noti }} <br>
+    {% endfor %}
 
     <div class = "inbox-container">
         {% if requests %}
@@ -105,6 +108,10 @@
                 {% endif %}
             </div>
         </div>
+
+        
+
+
         {% else %}
             <div class="no-requests">There are no requests to display.</div>
         {% endif %}

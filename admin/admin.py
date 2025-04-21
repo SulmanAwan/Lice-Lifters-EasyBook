@@ -656,6 +656,52 @@ def inbox():
             if matching_requests:
                 current_request = matching_requests[0]
 
+        ############################################################################################################################################
+
+        # Get all booking cancellation notifications and all related data so that it can be shown in the html
+        cursor.execute(""" 
+            SELECT 
+                bn.notification_id, 
+                bn.booking_id, 
+                b.customer_id, 
+                u.name, 
+                u.email, 
+                bt.type_name, 
+                ts.slot_date, 
+                ts.start_time, 
+                ts.end_time, 
+                pt.payment_method, 
+                pt.amount, 
+                pt.stripe_transaction_id,
+                bn.read_status
+            FROM booking_notification bn 
+            JOIN bookings b ON bn.booking_id = b.booking_id 
+            JOIN users u ON b.customer_id = u.user_id 
+            JOIN time_slots ts ON b.slot_id = ts.slot_id 
+            JOIN booking_types bt ON b.type_id = bt.type_id 
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id 
+            WHERE bn.read_status = FALSE 
+            ORDER BY bn.notification_id DESC 
+        """)
+        notifications = cursor.fetchall()
+
+        # Format the data into a date string, time string, payment_method and transaction_id (if applicable)
+        for notif in notifications:
+            notif['date_str'] = notif['slot_date'].strftime('%B %d, %Y')
+            notif['start_time_str'] = format_time(notif['start_time'])
+            notif['end_time_str'] = format_time(notif['end_time'])
+            notif['time_str'] = f"{notif['start_time_str']} - {notif['end_time_str']}"
+            
+            if notif['payment_method'] == 'in_store':
+                notif['payment_method_display'] = "In-store"
+            else:
+                notif['payment_method_display'] = "Online"
+            
+            notif['transaction_id'] = ""
+            if notif['payment_method'] == 'stripe' and notif['stripe_transaction_id']:
+                notif['transaction_id'] = f"{notif['stripe_transaction_id']}"
+
+
     except Exception as e:
         # Alert user of any error and render the page without requests in the case of error
         flash(f'Error fetching inbox messages: {str(e)}', 'error')
@@ -668,7 +714,11 @@ def inbox():
         conn.close()
     
     # Render the inbox page with all shift change requests and the current_request that it is on
-    return render_template('inbox.html', requests=requests, current_request=current_request, current_request_id=request_id)
+    return render_template('inbox.html', 
+                           requests=requests, 
+                           notifications=notifications,
+                           current_request=current_request, 
+                           current_request_id=request_id)
 
 @admin.route('/mark_as_read/<int:request_id>', methods=['POST'])
 def mark_as_read(request_id):

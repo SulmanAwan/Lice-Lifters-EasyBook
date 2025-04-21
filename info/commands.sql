@@ -96,6 +96,13 @@ CREATE TABLE reviews (
     FOREIGN KEY (customer_id) REFERENCES users(user_id)
 );
 
+CREATE TABLE booking_notification (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    read_status BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
+);
+
 -- Data that should be inserted for app to function properly:
 INSERT INTO booking_types (type_name, price)
 VALUES ('Lice Check', 40.00),('Lice Removal', 189.00);

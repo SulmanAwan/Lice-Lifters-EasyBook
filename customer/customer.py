@@ -800,15 +800,9 @@ def cancel_booking(booking_id):
     try:
         # Get the slot record to be decremented alongside the booking record along with all booking details
         cursor.execute("""
-            SELECT b.booking_id, b.slot_id, b.customer_id, b.appointment_status,
-                   ts.slot_date, ts.start_time, ts.end_time,
-                   u.name, u.email, bt.type_name, pt.amount, pt.payment_method,
-                   pt.stripe_transaction_id
+            SELECT b.booking_id, b.slot_id
             FROM bookings b
             JOIN time_slots ts ON b.slot_id = ts.slot_id
-            JOIN users u ON b.customer_id = u.user_id
-            JOIN booking_types bt ON b.type_id = bt.type_id
-            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
             WHERE b.booking_id = %s
         """, (booking_id,))
         
@@ -828,57 +822,15 @@ def cancel_booking(booking_id):
             WHERE booking_id = %s
             """, (booking_id,))
         
-        # Query to get all emails associated with admin accounts
+        # Add notification to booking_notifications table
         cursor.execute("""
-            SELECT email FROM users WHERE permission = 'admin'
-        """)
-        
-        admin_emails = [admin['email'] for admin in cursor.fetchall()]
-        
+            INSERT INTO booking_notification
+            (booking_id, read_status) 
+            VALUES (%s, FALSE)
+        """, (booking_id,))
+
         # Commit changes
         conn.commit()
-        
-        # This is so that all the admins are going to receive the email
-        if admin_emails:
-            # Format the date and time for display within the email
-            date_str = booking['slot_date'].strftime('%A, %B %d, %Y')
-            start_time_str = format_time(booking['start_time'])
-            end_time_str = format_time(booking['end_time'])
-            time_str = f"{start_time_str} - {end_time_str}"
-            
-            # Format payment method with the type of payment method that was selected
-            if booking['payment_method'] == 'in_store':
-                payment_method = "In-store"
-            else:
-                payment_method = "Online"
-
-            # Format the transaction ID for the email, if it was a stripe transaction include it, if not then return empty string
-            stripe_id = booking.get('stripe_transaction_id')
-            if booking.get('payment_method') == 'stripe' and stripe_id:
-                transaction_id = f"- Stripe Transaction ID: {stripe_id}"
-            else:
-                transaction_id = ""
-
-            msg = Message("Appointment Cancellation Notification", recipients=admin_emails)
-            
-            # This is the creation of the email
-            msg.body = f"""
-A customer has cancelled their appointment.
-
-Appointment Details:
-
-- Customer: {booking['name']}
-- Customer Email: {booking['email']}
-- Service: {booking['type_name']}
-- Date: {date_str}
-- Time: {time_str}
-- Payment Method: {payment_method}
-- Amount: ${booking['amount']}
-{ transaction_id }
-"""
-            
-            # This will send the email to all admins
-            mail.send(msg)
         
         # If it was a success, indicate to user
         flash('Booking cancelled successfully', 'success')
