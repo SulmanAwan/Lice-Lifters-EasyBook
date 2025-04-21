@@ -104,7 +104,7 @@
                             <div class="reason-box">{{ current_request['reason'] }}</div>
                         </div>
                         <form action="{{ url_for('admin.mark_as_read', request_id=current_request['request_id']) }}" method="post" class="field-button">
-                            <div class="button-container">
+                            <div class="request-button-container">
                                 <button type="submit" id="read">
                                     Mark as read
                                 </button>
@@ -151,10 +151,15 @@
                             <div class="label">Transaction ID:</div>
                             <div class="value">{{ current_notification['stripe_transaction_id'] }}</div>
                         </div>
+                        {% else %}
+                        <div class="field-row">
+                            <div class="label">Transaction ID:</div>
+                            <div class="value">N/A</div>
+                        </div>
                         {% endif %}
                         
                         <form action="{{ url_for('admin.mark_notification_as_read', notification_id=current_notification['notification_id']) }}" method="post" class="field-button">
-                            <div class="button-container">
+                            <div class="cancel-button-container">
                                 <button type="submit" id="read">
                                     Mark as read
                                 </button>

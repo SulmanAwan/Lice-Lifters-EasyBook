@@ -1,6 +1,6 @@
 .field-row{
     display: flex;
-    margin-bottom: 5vh;
+    margin-bottom: 4vh;
 
 }
 
@@ -140,6 +140,22 @@
     text-decoration: none;
 }
 
+.request-button-container{
+    display: flex;
+    width: 100%;
+    justify-content: left;
+    align-content: center;
+    margin-top: 70px;
+}
+
+.cancel-button-container{
+    display: flex;
+    width: 100%;
+    justify-content: left;
+    align-content: center;
+    margin-top: 40px;
+}
+
 .request-date {
     font-size: 14px;
     color: #666;
@@ -200,9 +216,10 @@
 .no-requests{
     font-size: 20px;
     font-family: "Delval Galanogrotesque", sans-serif;
-    background-color: #f2f2f2;
+    background-color: #f0f0f0;
     border-radius: 10px;
     padding: 20px;
+    box-shadow: 1px 4px 6px rgba(0, 0, 0, 0.1);
     width: 164vh;
     text-align: center;
     color: #555;
