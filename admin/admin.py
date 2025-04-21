@@ -1799,7 +1799,7 @@ def process_message():
         msg = Message(
             subject=subject,
             recipients=[recipient],
-            body=f"Hello {user['name']},\n\n{message_body}"
+            body=f"Hello {user['name']},\n\n{message_body}\n\nBest regards,\n{session.get('name')}"
         )
         
         # Send the email
