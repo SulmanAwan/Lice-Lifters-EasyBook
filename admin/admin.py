@@ -621,6 +621,7 @@ def inbox():
     
     # Get the selected request ID from URL parameters
     request_id = request.args.get('request_id')
+    notification_id = request.args.get('notification_id')
     
     try:
         # Get all columns of data required to show the change requests
@@ -641,21 +642,6 @@ def inbox():
             req['end_time'] = format_time(req['end_time'])
             req['shift_date'] = req['shift_date'].strftime('%B %d, %Y')
         
-        # This is handling when the admin clicks on the inbox, that the first request_id is being selected 
-        # as no request_id is passed in
-        if not request_id and requests:
-            request_id = requests[0]['request_id']
-
-        # This is to initialize the current_request variable to None
-        current_request = None
-        # This is the request_id that has been defaulted to previously
-        if request_id:
-            # This is being used to create a list where requests where the ID matches our request_id, some type matching is done
-            matching_requests = [req for req in requests if str(req['request_id']) == str(request_id)]
-            # If there are any matching requests, we set the current_request to only one in the list
-            if matching_requests:
-                current_request = matching_requests[0]
-
         ############################################################################################################################################
 
         # Get all booking cancellation notifications and all related data so that it can be shown in the html
@@ -681,7 +667,7 @@ def inbox():
             JOIN booking_types bt ON b.type_id = bt.type_id 
             JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id 
             WHERE bn.read_status = FALSE 
-            ORDER BY bn.notification_id DESC 
+            ORDER BY ts.slot_date ASC, ts.start_time ASC
         """)
         notifications = cursor.fetchall()
 
@@ -701,24 +687,72 @@ def inbox():
             if notif['payment_method'] == 'stripe' and notif['stripe_transaction_id']:
                 notif['transaction_id'] = f"{notif['stripe_transaction_id']}"
 
+        # This is to initialize the current_request variable to None
+        current_request = None
+        # This is to initialize the current_notification variable to None
+        current_notification = None
+        # This is to initialize the inbox_type variable to None
+        inbox_type = None
+        
+        # This finds the matching request if a request_id parameter was provided
+        if request_id:
+            # This is being used to create a list where requests where the ID matches our request_id, some type matching is done
+            matching_requests = [req for req in requests if str(req['request_id']) == str(request_id)]
+            if matching_requests:
+                # If there are any matching requests, we set the current_request to only one in the list
+                current_request = matching_requests[0]
+                # This is to set the inbox_type to shift since we are looking at a shift change request
+                inbox_type = 'shift'
+        
+        # This finds the matching notification if a notification_id parameter was provided
+        if notification_id:
+            # This is being used to create a list where notifications where the ID matches our notification_id, some type matching is done
+            matching_notifications = [notif for notif in notifications if str(notif['notification_id']) == str(notification_id)]
+            if matching_notifications:
+                # If there are any matching notifications, we set the current_notification to only one in the list
+                current_notification = matching_notifications[0]
+                # This is to set the inbox_type to cancellation since we are looking at a booking cancellation notification
+                inbox_type = 'cancellation'
+        
+        # This is handling when there is no request_id or notification_id provided, it will default to the first request or notification
+        if not request_id and not notification_id:
+            if requests:
+                # This defaults to the first request in the list if there are any requests
+                current_request = requests[0]
+                request_id = str(current_request['request_id'])
+                inbox_type = 'shift'
+            elif notifications:
+                # This occurs when there are no requests but there are notifications
+                # This defaults to the first notification in the list if there are any notifications
+                current_notification = notifications[0]
+                notification_id = str(current_notification['notification_id'])
+                inbox_type = 'cancellation'
 
     except Exception as e:
         # Alert user of any error and render the page without requests in the case of error
         flash(f'Error fetching inbox messages: {str(e)}', 'error')
-        # Set the current_request to None and requests to an empty list in case of error
+        # Set requests and notifications to empty lists, current_request and current_notification to None when error occurs
         requests = []
+        notifications = []
         current_request = None
+        current_notification = None
     finally:
         # close cursor and database connection
         cursor.close()
         conn.close()
     
-    # Render the inbox page with all shift change requests and the current_request that it is on
+    # Render the inbox page with the requests and notifications data
+    # Also pass in the current_request and current_notification to show the full object data of the selected item
+    # Also pass in the request_id and notification_id which are the ID values needed for marking active items in the sidebar
+    # Also pass in the inbox_type to determine which type of inbox is being displayed (shift change requests or booking notifications)
     return render_template('inbox.html', 
-                           requests=requests, 
-                           notifications=notifications,
-                           current_request=current_request, 
-                           current_request_id=request_id)
+                          requests=requests, 
+                          notifications=notifications,
+                          current_request=current_request,
+                          current_notification=current_notification,
+                          current_request_id=request_id,
+                          current_notification_id=notification_id,
+                          inbox_type=inbox_type)
 
 @admin.route('/mark_as_read/<int:request_id>', methods=['POST'])
 def mark_as_read(request_id):
@@ -772,6 +806,35 @@ def mark_as_read(request_id):
         conn.close()
 
     # re-render the inbox page (this time the request marked as read will not be shown to the admin)
+    return redirect(url_for('admin.inbox'))
+
+
+@admin.route('/mark_notification_as_read/<int:notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # This will update the read_status in the booking_notification table for the notification_id passed into the route
+        cursor.execute(
+            "UPDATE booking_notification SET read_status = TRUE WHERE notification_id = %s",
+            (notification_id,)
+        )
+
+        #commit the change and alert user of success
+        conn.commit()
+        flash('Notification marked as read.', 'success')
+
+    except Exception as e:
+        # Alert user of any error
+        flash(f'Error marking notification as read: {str(e)}', 'error')
+
+    finally:
+        # close cursor and db connection
+        cursor.close()
+        conn.close()
+    
+    # re-render the inbox page (this time the notification marked as read will not be shown to the admin)
     return redirect(url_for('admin.inbox'))
 
 @admin.route('/manage_shift/<selected_date>', methods=['GET'])

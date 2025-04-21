@@ -7,7 +7,9 @@
 .field-button{
     display: flex;
     margin-bottom: 1vh;
+    
 }
+
 .messagedirect-button{
     display: flex;
     align-items: center;
@@ -159,6 +161,22 @@
 .details-content {
     padding: 25px;
     overflow-y: auto;
+}
+
+.request-item.cancellation {
+    background-color: #FFE5E5;
+}
+
+.request-item.cancellation:hover {
+    background-color: #FFD6D6;
+}
+
+.request-item.cancellation.active {
+    background-color: #FFB3B3;
+}
+
+.request-item.cancellation .indicator {
+    background-color: #FF0000;
 }
 
 .reason-box {

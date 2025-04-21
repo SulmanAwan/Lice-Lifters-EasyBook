@@ -19,12 +19,9 @@
             <a href="{{ url_for('admin.admin_homepage') }}" id="back">Back</a>
         </div>
     </div>
-    {% for noti in notifications %}
-        {{  noti }} <br>
-    {% endfor %}
 
     <div class = "inbox-container">
-        {% if requests %}
+        {% if requests or notifications %}
         <div class="card-container">
             <div class="sidebar">
                 <div class="sidebar-header">
@@ -32,10 +29,10 @@
                 </div>
                 <div class="request-list">
                     {% for request in requests %}
-                    <div class="request-item {% if request['request_id']|string == current_request_id|string %}active{% endif %}">
+                    <div class="request-item {% if request['request_id']|string == current_request_id|string and inbox_type == 'shift' %}active{% endif %}">
                         <div class="indicator"></div>
                         <div class="request-preview">
-                            <a href="{{ url_for('admin.inbox', request_id=request['request_id']) }}" class="request-link">
+                            <a href="{{ url_for('admin.inbox', request_id=request['request_id'], type='shift') }}" class="request-link">
                                 <div class="request-name">{{ request['name'] }}</div>
                                 <div class="request-type">
                                     {% if request['request_type'] == 'swap' %}
@@ -53,11 +50,24 @@
                         </div>
                     </div>
                     {% endfor %}
+                    
+                    {% for notification in notifications %}
+                    <div class="request-item cancellation {% if notification['notification_id']|string == current_notification_id|string and inbox_type == 'cancellation' %}active{% endif %}">
+                        <div class="indicator"></div>
+                        <div class="request-preview">
+                            <a href="{{ url_for('admin.inbox', notification_id=notification['notification_id'], type='cancellation') }}" class="request-link">
+                                <div class="request-name">{{ notification['name'] }}</div>
+                                <div class="request-type">Booking Cancellation</div>
+                                <div class="request-date">{{ notification['date_str'] }}</div>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
             
             <div class="details-panel">
-                {% if current_request %}
+                {% if current_request and inbox_type == 'shift' %}
                 <div class="request-details">
                     <div class="details-header">
                         <h2>Request Details</h2>
@@ -94,26 +104,72 @@
                             <div class="reason-box">{{ current_request['reason'] }}</div>
                         </div>
                         <form action="{{ url_for('admin.mark_as_read', request_id=current_request['request_id']) }}" method="post" class="field-button">
-                            <button type="submit" id="read">
-                                Mark as read
-                            </button>
-                            <a href="{{ url_for('admin.send_message', email=current_request['email']) }}" id="msg">
-                                Send Message
-                            </a>
+                            <div class="button-container">
+                                <button type="submit" id="read">
+                                    Mark as read
+                                </button>
+                                <a href="{{ url_for('admin.send_message', email=current_notification['email']) }}" id="msg">
+                                    Send Message
+                                </a>
+                            </div>
                         </form>
                     </div>
                 </div>
-                {% else %}
-                    <div class = "no-requests">There are no shift change requests.</div>
+                
+                {% elif current_notification and inbox_type == 'cancellation' %}
+                <div class="request-details">
+                    <div class="details-header">
+                        <h2>Cancellation Details</h2>
+                    </div>
+                    <div class="details-content">
+                        <div class="field-row">
+                            <div class="label">Customer:</div>
+                            <div class="value">{{ current_notification['name'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Service:</div>
+                            <div class="value">{{ current_notification['type_name'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Date:</div>
+                            <div class="value">{{ current_notification['date_str'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Time:</div>
+                            <div class="value">{{ current_notification['time_str'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Payment Method:</div>
+                            <div class="value">{{ current_notification['payment_method_display'] }}</div>
+                        </div>
+                        <div class="field-row">
+                            <div class="label">Amount:</div>
+                            <div class="value">${{ current_notification['amount'] }}</div>
+                        </div>
+                        {% if current_notification['transaction_id'] %}
+                        <div class="field-row">
+                            <div class="label">Transaction ID:</div>
+                            <div class="value">{{ current_notification['stripe_transaction_id'] }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        <form action="{{ url_for('admin.mark_notification_as_read', notification_id=current_notification['notification_id']) }}" method="post" class="field-button">
+                            <div class="button-container">
+                                <button type="submit" id="read">
+                                    Mark as read
+                                </button>
+                                <a href="{{ url_for('admin.send_message', email=current_notification['email']) }}" id="msg">
+                                    Send Message
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
-
-        
-
-
         {% else %}
-            <div class="no-requests">There are no requests to display.</div>
+            <div class="no-requests">There are no requests or notifications to display.</div>
         {% endif %}
     </div>
 {% endblock %}
