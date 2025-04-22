@@ -29,7 +29,6 @@
 .title hr {
     border: none;
     background-color: black;
-    margin: 8px 0 0 0;
     width: 1400px;
     border: 2px solid black;
 }
@@ -70,8 +69,8 @@
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 .appointments-sections {
-    margin-left: 20vh;
-    margin-right: 20vh;
+    margin-left: 24vh;
+    margin-right: 24vh;
 }
 .appointments-sections h2 {
     margin: 30px 0 20px 0;
