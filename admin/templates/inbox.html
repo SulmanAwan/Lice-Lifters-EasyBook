@@ -108,7 +108,7 @@
                                 <button type="submit" id="read">
                                     Mark as read
                                 </button>
-                                <a href="{{ url_for('admin.send_message', email=current_notification['email']) }}" id="msg">
+                                <a href="{{ url_for('admin.send_message', email=current_request['email']) }}" id="msg">
                                     Send Message
                                 </a>
                             </div>
