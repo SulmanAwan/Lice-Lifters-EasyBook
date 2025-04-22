@@ -98,7 +98,7 @@ CREATE TABLE reviews (
 
 CREATE TABLE booking_notification (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT NOT NULL,
+    booking_id INT NOT NULL UNIQUE,
     read_status BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
