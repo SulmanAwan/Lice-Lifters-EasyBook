@@ -4,7 +4,7 @@ USE easybook;
 
 -- Making admin account
 INSERT IGNORE INTO users (name, email, password, permission) 
-VALUES ('admin', 'admin@gmail.com', 'admin', 'admin');
+VALUES ('admin', 'manager.easybook123@gmail.com', 'admin', 'admin');
 
 -- Users table: Record of all users
 CREATE TABLE IF NOT EXISTS users (
