@@ -28,6 +28,7 @@
                     <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
                     <option value="current" {% if status_filter == 'current' %}selected{% endif %}>Upcoming</option>
                     <option value="past" {% if status_filter == 'past' %}selected{% endif %}>Past</option>
+                    <option value="cancel" {% if status_filter == 'cancel' %}selected{% endif %}>Cancelled</option>
                 </select>
             </div>
             
@@ -73,13 +74,13 @@
 
     <div class = "appointments-container">
     {% if bookings %}
-        {% for booking in bookings%}
+        {% for booking in bookings %}
                 {% if booking.appointment_status == "current" %}
                     {% include 'cards/current_card.html' %}
-                {% endif %}
-
-                {% if booking.appointment_status == "past" %}
+                {% elif booking.appointment_status == "past" %}
                     {% include 'cards/past_card.html' %}
+                {% elif booking.appointment_status == "cancel" %}
+                    {% include 'cards/cancelled_card.html' %}
                 {% endif %}
         {% endfor %}
     {% else %}

@@ -1086,7 +1086,7 @@ def manage_bookings():
                    u.name as customer_name, bt.type_name as service_type,
                    pt.payment_method, b.appointment_status,
                    IFNULL(r.rating, 0) as rating,
-                   comment
+                   r.comment
             FROM bookings b
             JOIN time_slots ts ON b.slot_id = ts.slot_id
             JOIN users u ON b.customer_id = u.user_id
@@ -1129,10 +1129,19 @@ def manage_bookings():
         if name_filter:
             query += " AND u.name LIKE %s"
             new_filter.append(f"%{name_filter}%")
-        
-        # We will order the results by date in descending order (so the newest bookings appear at the top)
-        # And start time in ascending order so the earliest times appear first
-        query += " ORDER BY ts.slot_date DESC, ts.start_time ASC"
+
+        # Prioritize current bookings, then past, then cancelled
+        query += """ 
+            ORDER BY 
+                CASE 
+                    WHEN b.appointment_status = 'current' THEN 1
+                    WHEN b.appointment_status = 'past' THEN 2
+                    WHEN b.appointment_status = 'cancel' THEN 3
+                    ELSE 4
+                END,
+                ts.slot_date DESC, 
+                ts.start_time ASC
+        """
         
         # We execute the query and pass in the values stored in the new_filters list (these are specified by user)
         cursor.execute(query, new_filter)
@@ -1140,7 +1149,6 @@ def manage_bookings():
 
         # Format dates, times, and payment_method
         for booking in bookings:
-
             # Override the old slot_date (datatype DATE) with the formatted version
             if booking['slot_date']:
                 booking['slot_date'] = booking['slot_date'].strftime('%B %d, %Y')
@@ -1163,6 +1171,14 @@ def manage_bookings():
                 booking['rating'] = booking['rating'] + '☆' * (5 - rating_value)
             else: # If user left no rating we store a string to indicate that
                 booking['rating'] = 'No rating'
+                
+            # Add a UI-friendly status for the appointment_status
+            if booking['appointment_status'] == 'current':
+                booking['appointment_status_display'] = 'Upcoming'
+            elif booking['appointment_status'] == 'past':
+                booking['appointment_status_display'] = 'Past'
+            elif booking['appointment_status'] == 'cancel':
+                booking['appointment_status_display'] = 'Cancelled'
 
     except Exception as e:
         # If we get an error we display error and return a empty bookings list
@@ -1442,16 +1458,6 @@ def delete_booking(booking_id):
     cursor = conn.cursor(dictionary=True)
     
     try:
-
-        # Get the slot record and transaction record that will be deleted alongside the booking record
-        cursor.execute("""
-            SELECT b.slot_id, b.transaction_id 
-            FROM bookings b
-            WHERE b.booking_id = %s
-        """, (booking_id,))
-        
-        booking = cursor.fetchone()
-        
         # Used to connect appointment to customer and done at this part before being updated
         cursor.execute("""
         SELECT b.booking_id, b.customer_id, b.type_id, pt.transaction_id, ts.slot_id, ts.slot_date, ts.start_time, ts.end_time,
@@ -1476,12 +1482,26 @@ def delete_booking(booking_id):
         else:
             flash("Unable to find name or email of customer")
 
-        # Decrement the current_bookings count in the time_slots table corresponding to the booking
+        # Get the slot record and transaction record that will be deleted alongside the booking record
         cursor.execute("""
-            UPDATE time_slots
-            SET current_bookings = current_bookings - 1
-            WHERE slot_id = %s
-        """, (booking['slot_id'],))
+            SELECT b.slot_id, b.transaction_id, b.appointment_status
+            FROM bookings b
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+
+        booking = cursor.fetchone()
+
+        # Only decrement the current_bookings if the status is not 'cancel'
+        if booking['appointment_status'] != 'cancel':
+            # Decrement the current_bookings count in the time_slots table corresponding to the booking
+            cursor.execute("""
+                UPDATE time_slots
+                SET current_bookings = current_bookings - 1
+                WHERE slot_id = %s
+            """, (booking['slot_id'],))
+
+        # Delete any booking notification if it exists
+        cursor.execute("DELETE FROM booking_notification WHERE booking_id = %s", (booking_id,))
 
         # Delete any review if it exists for this booking, this is required so it doesn't yield a foreign key error
         cursor.execute("DELETE FROM reviews WHERE booking_id = %s", (booking_id,))
@@ -1703,169 +1723,217 @@ def generate_default_timeslots(selected_date):
 
 @admin.route('/analytics_dashboard', methods=['GET'])
 def analytics_dashboard():
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-     
+    try:
+        # Query for total bookings
+        cursor.execute("""
+            SELECT COUNT(booking_id) as total
+            FROM bookings
+            """)
+        total_booking = cursor.fetchone()
+        total_amount = total_booking["total"] if total_booking else 0
+
+        # Query for completed/active bookings (not canceled)
+        cursor.execute("""
+            SELECT COUNT(booking_id) as total
+            FROM bookings
+            WHERE appointment_status != 'cancel'
+            """)
+        booking_result = cursor.fetchone()
+        booking_count = booking_result["total"] if booking_result else 0
+
         # Query for cancellation amount
-    cursor.execute("""
-        SELECT COUNT(booking_id)
-        FROM bookings
+        cursor.execute("""
+            SELECT COUNT(*) as cancel_count
+            FROM bookings
+            WHERE appointment_status = 'cancel'
+            """)
+        cancel_result = cursor.fetchone()
+        total_cancel_amount = cancel_result["cancel_count"] if cancel_result else 0
+
+        # Calculate cancellation rate
+        if total_amount != 0:
+            appointment_cancellation_rate = round((total_cancel_amount / total_amount) * 100, 2)
+        else:
+            appointment_cancellation_rate = 0
+
+        # Query for most popular days
+        cursor.execute("""
+            SELECT ts.slot_date, COUNT(*) AS booking_count
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            WHERE b.appointment_status != 'cancel'
+            GROUP BY ts.slot_date
+            ORDER BY booking_count DESC, ts.slot_date DESC
+            LIMIT 1
         """)
-    total_booking = cursor.fetchall()
+        popular_day_result = cursor.fetchone()
+        
+        # Check if there's a result for popular day
+        if popular_day_result and popular_day_result["slot_date"]:
+            popular_day_date = popular_day_result["slot_date"]
+            popular_day = popular_day_date.strftime("%A")
+        else:
+            popular_day = "N/A"
 
-            # Query for total amount
-    cursor.execute("""
-        SELECT COUNT(booking_id) as total
-        FROM bookings
-        WHERE appointment_status != "cancel"
+        # Query for least popular days
+        cursor.execute("""
+            SELECT ts.slot_date, COUNT(*) AS booking_count
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            WHERE b.appointment_status != 'cancel'
+            GROUP BY ts.slot_date
+            ORDER BY booking_count ASC, ts.slot_date ASC
+            LIMIT 1
         """)
-    booking_count = cursor.fetchall()[0]["total"]
+        unpopular_day_result = cursor.fetchone()
+        
+        # Check if there's a result for less popular day
+        if unpopular_day_result and unpopular_day_result["slot_date"]:
+            unpopular_day_date = unpopular_day_result["slot_date"]
+            unpopular_day = unpopular_day_date.strftime("%A")
+        else:
+            unpopular_day = "N/A"
 
-        # Query for cancellation amount
-    cursor.execute("""
-        SELECT COUNT(appointment_status)
-        FROM bookings
-        WHERE appointment_status = "cancel"
+        # Query for most popular time slot with additional details
+        cursor.execute("""
+            SELECT 
+                ts.start_time, 
+                ts.end_time, 
+                COUNT(*) as booking_count,
+                GROUP_CONCAT(DISTINCT TIME_FORMAT(ts.start_time, '%H:%i') ORDER BY ts.start_time) as time_slots
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            WHERE b.appointment_status != 'cancel'
+            GROUP BY ts.start_time, ts.end_time
+            ORDER BY booking_count DESC, ts.start_time ASC
+            LIMIT 3
         """)
-    total_cancel = cursor.fetchall()
+        popular_time_results = cursor.fetchall()
+        
+        # Format time slots - take the first one with the highest count
+        if popular_time_results and len(popular_time_results) > 0 and popular_time_results[0]["start_time"]:
+            max_booking_count = popular_time_results[0]["booking_count"]
+            popular_time_result = popular_time_results[0]
+            
+            # If we have multiple timeslots with the same count, choose a different one than least popular
+            if len(popular_time_results) > 1 and popular_time_results[1]["booking_count"] == max_booking_count:
+                alt_popular_time = popular_time_results[1]
+                format_popular_start_time_slot = format_time(alt_popular_time["start_time"])
+                format_popular_end_time_slot = format_time(alt_popular_time["end_time"])
+            else:
+                format_popular_start_time_slot = format_time(popular_time_result["start_time"])
+                format_popular_end_time_slot = format_time(popular_time_result["end_time"])
+        else:
+            format_popular_start_time_slot = "N/A"
+            format_popular_end_time_slot = "N/A"
 
-    
-    for row in total_cancel:
-        total_cancel_amount = total_cancel[0]["COUNT(appointment_status)"]
-    for row in total_booking:
-        total_amount = total_booking[0]["COUNT(booking_id)"]
+        # Query for least popular time slot
+        cursor.execute("""
+            SELECT 
+                ts.start_time, 
+                ts.end_time, 
+                COUNT(*) as booking_count
+            FROM bookings b
+            JOIN time_slots ts ON b.slot_id = ts.slot_id
+            WHERE b.appointment_status != 'cancel'
+            GROUP BY ts.start_time, ts.end_time
+            HAVING COUNT(*) > 0
+            ORDER BY booking_count ASC, ts.start_time DESC
+            LIMIT 3
+        """)
+        unpopular_time_results = cursor.fetchall()
+        
+        # Format time slots - take the first one with the lowest count
+        if unpopular_time_results and len(unpopular_time_results) > 0 and unpopular_time_results[0]["start_time"]:
+            # Get the minimum booking count
+            min_booking_count = unpopular_time_results[0]["booking_count"]
+            unpopular_time_result = unpopular_time_results[0]
+            
+            # Get the popular timeslot for comparison (if it exists)
+            popular_start = popular_time_result["start_time"].total_seconds() if 'popular_time_result' in locals() else 0
+            popular_end = popular_time_result["end_time"].total_seconds() if 'popular_time_result' in locals() else 0
+            
+            # Check if the least popular timeslot is the same as the most popular
+            current_start = unpopular_time_result["start_time"].total_seconds()
+            current_end = unpopular_time_result["end_time"].total_seconds()
+            
+            if popular_start == current_start and popular_end == current_end and len(unpopular_time_results) > 1:
+                # If they're the same and we have alternatives, use the next one in the list
+                unpopular_time_result = unpopular_time_results[1]
+            
+            format_less_popular_start_time_slot = format_time(unpopular_time_result["start_time"])
+            format_less_popular_end_time_slot = format_time(unpopular_time_result["end_time"])
+        else:
+            format_less_popular_start_time_slot = "N/A"
+            format_less_popular_end_time_slot = "N/A"
 
-    if total_amount != 0:
-        appointment_cancellation_rate = round((total_cancel_amount / total_amount) * 100, 2)
-    else:
+        # Average satisfaction score
+        cursor.execute("SELECT AVG(rating) AS avg_rating FROM reviews WHERE rating IS NOT NULL")
+        result = cursor.fetchone()
+        avg_rating = round(result['avg_rating'], 2) if result['avg_rating'] else "No ratings yet"
+
+        # Revenue from Lice Check
+        cursor.execute("""
+            SELECT SUM(pt.amount) AS total_revenue
+            FROM bookings b
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE bt.type_name = 'Lice Check'
+            AND b.appointment_status != 'cancel'
+        """)
+        lice_check_result = cursor.fetchone()
+        head_check_revenue = lice_check_result['total_revenue'] or 0
+        head_check_revenue_formatted = f"${head_check_revenue:.2f}"
+
+        # Revenue from Lice Removal
+        cursor.execute("""
+            SELECT SUM(pt.amount) AS total_revenue
+            FROM bookings b
+            JOIN booking_types bt ON b.type_id = bt.type_id
+            JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
+            WHERE bt.type_name = 'Lice Removal'
+            AND b.appointment_status != 'cancel'
+        """)
+        lice_removal_result = cursor.fetchone()
+        lice_removal_revenue = lice_removal_result['total_revenue'] or 0
+        lice_removal_revenue_formatted = f"${lice_removal_revenue:.2f}"
+
+    except Exception as e:
+        # Handle errors
+        flash(f'Error fetching analytics data: {str(e)}', 'error')
+        # Set default values for all metrics
         appointment_cancellation_rate = 0
-
-    # Query for most popular days
-    cursor.execute("""
-        SELECT slot_date, COUNT(*) AS popular_date
-        FROM time_slots
-        WHERE current_bookings > 0
-        GROUP BY slot_date
-        ORDER BY popular_date DESC, slot_date DESC
-        LIMIT 1
-    """)
-    unformated_popular_day_date = cursor.fetchall()
-    # Check if there's a result for popular day
-    if unformated_popular_day_date:
-        popular_day_date = unformated_popular_day_date[0]["slot_date"]
-        popular_day = popular_day_date.strftime("%A")
-    else:
         popular_day = "N/A"
-
-    # Query for least popular days
-    cursor.execute("""
-        SELECT slot_date, COUNT(*) AS less_popular_date
-        FROM time_slots
-        WHERE current_bookings > 0
-        GROUP BY slot_date
-        ORDER BY less_popular_date ASC, slot_date ASC
-        LIMIT 1
-    """)
-    less_popular_day_date = cursor.fetchall()
-    # Check if there's a result for less popular day
-    if less_popular_day_date:
-        unpopular_day_date = less_popular_day_date[0]["slot_date"]
-        unpopular_day = unpopular_day_date.strftime("%A")
-    else:
         unpopular_day = "N/A"
-
-    # Query for most popular time slot
-    cursor.execute("""
-        SELECT start_time, end_time, COUNT(*) as popular_timing
-        FROM time_slots
-        WHERE current_bookings > 0
-        GROUP BY start_time, end_time
-        ORDER BY popular_timing DESC
-        LIMIT 1
-    """)
-    unformated_popular_time_slot = cursor.fetchall()
-    # Converts database format of time into hours/minutes/AM or PM
-    #(1900,1,1) was used as a base so that the value works as a datetime object. As long as the values aren't 0 then any other examples work
-    if unformated_popular_time_slot:
-        popular_start_time_index = unformated_popular_time_slot[0]['start_time']
-        popular_end_time_index = unformated_popular_time_slot[0]['end_time']
-        popular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_start_time_index
-        format_popular_start_time_slot = popular_start_time_datetimeformat.strftime("%I:%M %p")
-        popular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + popular_end_time_index
-        format_popular_end_time_slot = popular_end_time_datetimeformat.strftime("%I:%M %p")
-    else:
         format_popular_start_time_slot = "N/A"
         format_popular_end_time_slot = "N/A"
-
-    # Query for less popular time slot
-    cursor.execute("""
-        SELECT start_time, end_time, COUNT(*) as less_popular_timing
-        FROM time_slots
-        WHERE current_bookings > 0
-        GROUP BY start_time, end_time
-        ORDER BY less_popular_timing ASC
-        LIMIT 1
-    """)
-    unformated_less_popular_time_slot = cursor.fetchall()
-    # Converts database format of time into hours/minutes/AM or PM
-    if unformated_less_popular_time_slot:
-        unpopular_start_time_index = unformated_less_popular_time_slot[0]['start_time']
-        unpopular_end_time_index = unformated_less_popular_time_slot[0]['end_time']
-        unpopular_start_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_start_time_index
-        format_less_popular_start_time_slot = unpopular_start_time_datetimeformat.strftime("%I:%M %p")
-        unpopular_end_time_datetimeformat = datetime.datetime(1900, 1, 1) + unpopular_end_time_index
-        format_less_popular_end_time_slot = unpopular_end_time_datetimeformat.strftime("%I:%M %p")
-    else:
         format_less_popular_start_time_slot = "N/A"
         format_less_popular_end_time_slot = "N/A"
-
-    # Average satisfaction score
-    cursor.execute("SELECT AVG(rating) AS avg_rating FROM reviews WHERE rating IS NOT NULL")
-    result = cursor.fetchone()
-    avg_rating = round(result['avg_rating'], 2) if result['avg_rating'] else "No ratings yet"
-
-    # Revenue from Head Check
-    cursor.execute("""
-        SELECT SUM(pt.amount) AS total_revenue
-        FROM bookings b
-        JOIN booking_types bt ON b.type_id = bt.type_id
-        JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
-        WHERE bt.type_name = 'lice check'
-        AND b.appointment_status != 'cancel'
-    """)
-    head_check_revenue = cursor.fetchone()['total_revenue'] or 0
-
-    # Revenue from Lice Removal
-    cursor.execute("""
-        SELECT SUM(pt.amount) AS total_revenue
-        FROM bookings b
-        JOIN booking_types bt ON b.type_id = bt.type_id
-        JOIN payment_transactions pt ON b.transaction_id = pt.transaction_id
-        WHERE bt.type_name = 'lice removal'
-        AND b.appointment_status != 'cancel'
-    """)
-    lice_removal_revenue = cursor.fetchone()['total_revenue'] or 0
-
-
-    cursor.close()
-    conn.close()
+        booking_count = 0
+        head_check_revenue_formatted = "$0.00"
+        lice_removal_revenue_formatted = "$0.00"
+        avg_rating = "No ratings yet"
+    finally:
+        cursor.close()
+        conn.close()
    
-   # Formated this part per line because it was hard to read
+    # Render template with analytics data
     return render_template('analytics_dashboard.html', 
-                           appointment_cancellation_rate=appointment_cancellation_rate, 
-                           popular_day=popular_day, 
-                           unpopular_day=unpopular_day, 
-                           format_popular_end_time_slot=format_popular_end_time_slot, 
-                           format_popular_start_time_slot=format_popular_start_time_slot, 
-                           format_less_popular_start_time_slot=format_less_popular_start_time_slot,
-                           format_less_popular_end_time_slot=format_less_popular_end_time_slot,
-                           booking_count=booking_count,
-                           lice_removal_revenue=lice_removal_revenue,
-                            head_check_revenue=head_check_revenue,
-                            avg_rating=avg_rating
-                           )
+                          appointment_cancellation_rate=appointment_cancellation_rate, 
+                          popular_day=popular_day, 
+                          unpopular_day=unpopular_day, 
+                          format_popular_end_time_slot=format_popular_end_time_slot, 
+                          format_popular_start_time_slot=format_popular_start_time_slot, 
+                          format_less_popular_start_time_slot=format_less_popular_start_time_slot,
+                          format_less_popular_end_time_slot=format_less_popular_end_time_slot,
+                          booking_count=booking_count,
+                          lice_removal_revenue=lice_removal_revenue_formatted,
+                          head_check_revenue=head_check_revenue_formatted,
+                          avg_rating=avg_rating
+                         )
 
 @admin.route('/send_message', methods=['GET'])
 def send_message():
